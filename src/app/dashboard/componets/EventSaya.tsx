@@ -20,7 +20,7 @@ const EventSaya = () => {
             </div>
 
             <div className="flex justify-center my-40">
-                <Button className="bg-blue-700 hover:bg-blue-800">Buat Event tes</Button>
+                <Button className="bg-blue-700 hover:bg-blue-800">Buat Event test</Button>
             </div>
         </div>
     )
