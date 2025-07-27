@@ -11,7 +11,7 @@ const SignUp = () =>{
         <div className="absolute inset-0 bg-black bg-opacity-40"></div>
         <div className="relative grid grid-cols-1 md:grid-cols-2 max-w-5xl w-full shadow-lg rounded-xl overflow-hidden">
         
-         </div>
+        </div>
         </div>
     </>
     )
