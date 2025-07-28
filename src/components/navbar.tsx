@@ -9,6 +9,16 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+
+export const ShowNavbar = () => {
+  const pathname = usePathname();
+
+  const hideFooter = pathname.startsWith('/account');
+
+  if (hideFooter) return null;
+  return <Navbar />;
+};
 
 const Navbar = () => {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -114,5 +124,3 @@ const Navbar = () => {
     </nav>
   );
 };
-
-export default Navbar;
