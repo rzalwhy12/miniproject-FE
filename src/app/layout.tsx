@@ -1,10 +1,11 @@
-import type { Metadata } from 'next';
+
+'use client';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import StoreProvider from './StoreProvider';
-
-import { ShowFooter } from '@/components/Footer';
-import { ShowNavbar } from '@/components/Navbar';
+import { usePathname } from 'next/navigation';
+import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/Footer';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -16,27 +17,25 @@ const geistMono = Geist_Mono({
   subsets: ['latin']
 });
 
-export const metadata: Metadata = {
-  title: 'Loka Adicara',
-  description: 'Jual beli tiket semua acaramu'
-};
-
 export default function RootLayout({
   children
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const hideNavAndFooter = pathname === '/signin' || pathname === '/signup';
+
   return (
     <html lang="en">
-      <StoreProvider>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          <ShowNavbar />
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <StoreProvider>
+          {!hideNavAndFooter && <Navbar />}
           {children}
-          <ShowFooter />
-        </body>
-      </StoreProvider>
+          {!hideNavAndFooter && <Footer />}
+        </StoreProvider>
+      </body>
     </html>
   );
 }
