@@ -10,8 +10,18 @@ import {
   Menu,
   X,
 } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
-const Navbar = () => {
+export const ShowNavbar = () => {
+  const pathname = usePathname();
+
+  const hideFooter = pathname.startsWith('/account');
+
+  if (hideFooter) return null;
+  return <Navbar />;
+};
+
+export const Navbar = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedLang, setSelectedLang] = useState('EN');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -116,5 +126,3 @@ const Navbar = () => {
     </nav>
   );
 };
-
-export default Navbar;
