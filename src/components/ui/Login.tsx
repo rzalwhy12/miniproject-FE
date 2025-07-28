@@ -19,7 +19,6 @@ const Login: React.FC = () => {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            <h2 className="text-3xl font-bold text-center text-indigo-700 mb-6">Welcome Back!</h2>
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email or Username</label>
                 <input
