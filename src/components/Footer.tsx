@@ -7,13 +7,11 @@ import { usePathname } from 'next/navigation';
 export const ShowFooter = () => {
   const pathname = usePathname();
 
-  const hideNavbar = pathname.startsWith('/account');
-
-  if (hideNavbar) return null;
+  if (pathname === '/sign-in' || pathname === '/sign-up') return null;
   return <Footer />;
 };
 
-export const Footer = () => {
+const Footer = () => {
   return (
     <footer className="bg-gray-800 text-white py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
