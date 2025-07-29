@@ -8,20 +8,18 @@ import {
   ChevronDown,
   User,
   Menu,
-  X,
+  X
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 export const ShowNavbar = () => {
   const pathname = usePathname();
 
-  const hideFooter = pathname.startsWith('/account');
-
-  if (hideFooter) return null;
+  if (pathname === '/sign-in' || pathname === '/sign-up') return null;
   return <Navbar />;
 };
 
-export const Navbar = () => {
+const Navbar = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedLang, setSelectedLang] = useState('EN');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -118,7 +116,10 @@ export const Navbar = () => {
         </div>
         {/* Login Button */}
 
-        <Link href="/signin" className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-lg sm:text-xl text-white font-medium px-6 sm:px-9 py-3 sm:py-4 rounded-xl transition w-[200px] lg:w-auto justify-center ml-5">
+        <Link
+          href="/signin"
+          className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-lg sm:text-xl text-white font-medium px-6 sm:px-9 py-3 sm:py-4 rounded-xl transition w-[200px] lg:w-auto justify-center ml-5"
+        >
           <User className="w-6 h-6 sm:w-7 sm:h-7 mr-2" />
           Login
         </Link>

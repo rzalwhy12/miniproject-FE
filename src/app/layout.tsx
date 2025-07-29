@@ -1,11 +1,9 @@
-
-'use client';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import StoreProvider from './StoreProvider';
-import { usePathname } from 'next/navigation';
-import { Navbar } from '@/components/navbar';
-import { Footer } from '@/components/Footer';
+
+import { ShowFooter } from '@/components/Footer';
+import { ShowNavbar } from '@/components/Navbar';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -22,20 +20,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const pathname = usePathname();
-  const hideNavAndFooter = pathname === '/signin' || pathname === '/signup';
-
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <StoreProvider>
-          {!hideNavAndFooter && <Navbar />}
+      <StoreProvider>
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        >
+          <ShowNavbar />
           {children}
-          {!hideNavAndFooter && <Footer />}
-        </StoreProvider>
-      </body>
+          <ShowFooter />
+        </body>
+      </StoreProvider>
     </html>
   );
 }
