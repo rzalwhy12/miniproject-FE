@@ -28,7 +28,7 @@ const AccountPage: React.FC = () => {
             }`}
             onClick={() => setPage('signup')}
           >
-            Sign Up
+            Sign Upe
           </button>
         </div>
         <div className="animate-fade-in">
