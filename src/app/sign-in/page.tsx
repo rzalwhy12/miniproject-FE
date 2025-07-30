@@ -92,28 +92,6 @@ const SignInPage: React.FC = () => {
       <div className="hidden lg:flex min-h-screen">
         {/* Left Side - Welcome Section */}
         <div className="lg:w-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-black relative overflow-hidden">
-          {/* Back Button for Desktop */}
-          <div className="absolute top-8 left-8 z-20">
-            <Link
-              href="/"
-              className="flex items-center text-white text-lg hover:text-pink-400 transition-colors"
-            >
-              <svg
-                className="w-6 h-6 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              Back
-            </Link>
-          </div>
 
           {/* Background Image/Pattern */}
           <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-pink-900/20 to-indigo-900/20"></div>
@@ -152,7 +130,30 @@ const SignInPage: React.FC = () => {
         </div>
 
         {/* Right Side - Login Form */}
-        <div className="lg:w-1/2 flex items-center justify-center bg-gray-50 px-8 py-12">
+        <div className="lg:w-1/2 flex items-center justify-center bg-gray-50 px-8 py-12 relative">
+          {/* Back Button for Desktop */}
+          <div className="absolute top-8 left-8">
+            <Link
+              href="/"
+              className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              <svg
+                className="w-6 h-6 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              Back
+            </Link>
+          </div>
+
           <div className="w-full max-w-md">
             <div className="bg-white rounded-2xl shadow-xl p-8">
               <div className="mb-8">
