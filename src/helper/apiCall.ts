@@ -1,5 +1,5 @@
-import axios from "axios";
+import axios from 'axios';
 
 export const apiCall = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_URL_DATABASE
+  baseURL: process.env.NEXT_PUBLIC_URL_DATABASE
 });

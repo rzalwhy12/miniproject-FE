@@ -8,7 +8,12 @@ import {  InstagramIcon, FacebookIcon, X, YoutubeIcon } from 'lucide-react';
 export const ShowFooter = () => {
   const pathname = usePathname();
 
-  if (pathname === '/sign-in' || pathname === '/sign-up') return null;
+  if (
+    pathname === '/sign-in' ||
+    pathname === '/sign-up' ||
+    pathname.startsWith('/verify')
+  )
+    return null;
   return <Footer />;
 };
 
