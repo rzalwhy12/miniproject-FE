@@ -75,10 +75,10 @@ const SignUpPage: React.FC = () => {
                   <p className="text-gray-600 text-sm">
                     Do you have an account?{' '}
                     <Link
-                      href="/login"
+                      href="/sign-in"
                       className="text-pink-500 hover:text-pink-700 font-semibold transition-colors duration-200"
                     >
-                      Log in
+                      sign in
                     </Link>
                   </p>
                 </div>
@@ -170,7 +170,7 @@ const SignUpPage: React.FC = () => {
                 <p className="text-gray-600">
                   Already have an account?{' '}
                   <Link
-                    href="/login"
+                    href="/sign-in"
                     className="text-pink-500 hover:text-pink-700 font-semibold transition-colors duration-200"
                   >
                     Sign in here

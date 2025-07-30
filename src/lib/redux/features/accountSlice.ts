@@ -20,9 +20,10 @@ const accountSlice = createSlice({
   reducers: {
     login: (state, action: PayloadAction<IAccount>) => {
       Object.assign(state, action.payload);
+      state.isLogin = true;
     },
     logout: () => {
-      initialState;
+      return { ...initialState };
     }
   }
 });
