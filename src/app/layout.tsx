@@ -3,8 +3,9 @@ import './globals.css';
 import StoreProvider from './StoreProvider';
 import { Toaster } from 'sonner';
 import { ShowFooter } from '@/components/Footer';
-import { ShowNavbar } from '@/components/navbar';
+
 import LoadingAnimation from '@/components/Loading';
+import { ShowNavbar } from '@/components/Navbar';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
