@@ -117,7 +117,7 @@ const Navbar = () => {
         {/* Login Button */}
 
         <Link
-          href="/signin"
+          href="/sign-in"
           className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-lg sm:text-xl text-white font-medium px-6 sm:px-9 py-3 sm:py-4 rounded-xl transition w-[200px] lg:w-auto justify-center ml-5"
         >
           <User className="w-6 h-6 sm:w-7 sm:h-7 mr-2" />
