@@ -1,3 +1,4 @@
+import { IAccount } from '@/types/accounts.type';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface IAccountState extends IAccount {
@@ -7,10 +8,6 @@ interface IAccountState extends IAccount {
 const initialState: IAccountState = {
   name: '',
   username: '',
-  email: '',
-  profileImage: '',
-  gender: '',
-  birthDate: '',
   isLogin: false
 };
 
@@ -18,15 +15,15 @@ const accountSlice = createSlice({
   name: 'account',
   initialState,
   reducers: {
-    login: (state, action: PayloadAction<IAccount>) => {
+    signIn: (state, action: PayloadAction<IAccount>) => {
       Object.assign(state, action.payload);
       state.isLogin = true;
     },
-    logout: () => {
+    userOut: () => {
       return { ...initialState };
     }
   }
 });
 
-export const { login, logout } = accountSlice.actions;
+export const { signIn, userOut } = accountSlice.actions;
 export default accountSlice.reducer;

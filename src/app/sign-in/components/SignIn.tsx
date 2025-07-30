@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { useAppDispatch } from '@/lib/redux/hook';
 import { hideLoading, showLoading } from '@/lib/redux/features/loadingSlice';
 import { useRouter } from 'next/navigation';
-
+import { signIn } from '@/lib/redux/features/accountSlice';
 const SignIn: React.FC = () => {
   const formRef = useRef<HTMLFormElement>(null);
   const identifierRef = useRef<HTMLInputElement>(null);
@@ -40,6 +40,9 @@ const SignIn: React.FC = () => {
       toast.success(res.data.result.message, {
         duration: 3000
       });
+      dispatch(signIn(res.data.result.data));
+      const token = res.data.result.token;
+      localStorage.setItem('token', token);
       router.push('/');
     } catch (error: unknown) {
       dispatch(hideLoading());
