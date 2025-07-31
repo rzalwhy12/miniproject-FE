@@ -158,7 +158,7 @@ const Navbar = () => {
           <div className="relative">
             <button
               onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-              className="flex items-center bg-green-600 hover:bg-green-700 text-base lg:text-lg xl:text-xl text-white font-medium px-3 lg:px-4 xl:px-6 py-2 lg:py-2 xl:py-3 rounded-lg lg:rounded-xl transition w-[200px] lg:w-auto justify-center mx-5 mb-6 lg:mb-0 lg:mx-0"
+              className="flex items-center bg-purple-600 hover:bg-purple-700 text-base lg:text-lg xl:text-xl text-white font-medium px-3 lg:px-4 xl:px-6 py-2 lg:py-2 xl:py-3 rounded-lg lg:rounded-xl transition w-[200px] lg:w-auto justify-center mx-5 mb-6 lg:mb-0 lg:mx-0"
             >
               <UserCircle className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 mr-1 lg:mr-2" />
               <span className="text-sm lg:text-base xl:text-lg">{user?.name || user?.username || 'Profile'}</span>
