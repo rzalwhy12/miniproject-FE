@@ -9,9 +9,13 @@ import {
   User,
   Menu,
   X,
-  Plus
+  Plus,
+  LogOut,
+  Settings,
+  UserCircle
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const ShowNavbar = () => {
   const pathname = usePathname();
@@ -27,12 +31,20 @@ export const ShowNavbar = () => {
 
 const Navbar = () => {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [selectedLang, setSelectedLang] = useState('EN');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
 
   const handleLangSelect = (lang: string) => {
     setSelectedLang(lang);
     setShowDropdown(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setShowProfileDropdown(false);
+    setMobileMenuOpen(false);
   };
 
   return (
@@ -122,22 +134,66 @@ const Navbar = () => {
         </div>
 
         {/* Create Event Button */}
-        <Link
-          href="/create"
-          className="flex items-center bg-pink-500 hover:bg-pink-600 text-base lg:text-lg xl:text-xl text-white font-medium px-3 lg:px-4 xl:px-6 py-2 lg:py-2 xl:py-3 rounded-lg lg:rounded-xl transition w-[200px] lg:w-auto justify-center mx-5 mt-4 mb-3 lg:mt-0 lg:mb-0 lg:mx-0"
-        >
-          <Plus className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 mr-1 lg:mr-2" />
-          <span className="text-sm lg:text-base xl:text-lg">Create Event</span>
-        </Link>
+        {isAuthenticated ? (
+          <Link
+            href="/create"
+            className="flex items-center bg-pink-500 hover:bg-pink-600 text-base lg:text-lg xl:text-xl text-white font-medium px-3 lg:px-4 xl:px-6 py-2 lg:py-2 xl:py-3 rounded-lg lg:rounded-xl transition w-[200px] lg:w-auto justify-center mx-5 mt-4 mb-3 lg:mt-0 lg:mb-0 lg:mx-0"
+          >
+            <Plus className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 mr-1 lg:mr-2" />
+            <span className="text-sm lg:text-base xl:text-lg">Create Event</span>
+          </Link>
+        ) : (
+          <Link
+            href="/sign-in"
+            className="flex items-center bg-pink-500 hover:bg-pink-600 text-base lg:text-lg xl:text-xl text-white font-medium px-3 lg:px-4 xl:px-6 py-2 lg:py-2 xl:py-3 rounded-lg lg:rounded-xl transition w-[200px] lg:w-auto justify-center mx-5 mt-4 mb-3 lg:mt-0 lg:mb-0 lg:mx-0"
+            title="Login required to create events"
+          >
+            <Plus className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 mr-1 lg:mr-2" />
+            <span className="text-sm lg:text-base xl:text-lg">Create Event</span>
+          </Link>
+        )}
 
-        {/* Login Button */}
-        <Link
-          href="/sign-in"
-          className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-base lg:text-lg xl:text-xl text-white font-medium px-3 lg:px-4 xl:px-6 py-2 lg:py-2 xl:py-3 rounded-lg lg:rounded-xl transition w-[200px] lg:w-auto justify-center mx-5 mb-6 lg:mb-0 lg:mx-0"
-        >
-          <User className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 mr-1 lg:mr-2" />
-          <span className="text-sm lg:text-base xl:text-lg">Login</span>
-        </Link>
+        {/* Login/Profile Button */}
+        {isAuthenticated ? (
+          <div className="relative">
+            <button
+              onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+              className="flex items-center bg-green-600 hover:bg-green-700 text-base lg:text-lg xl:text-xl text-white font-medium px-3 lg:px-4 xl:px-6 py-2 lg:py-2 xl:py-3 rounded-lg lg:rounded-xl transition w-full lg:w-auto justify-center mx-5 mb-6 lg:mb-0 lg:mx-0"
+            >
+              <UserCircle className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 mr-1 lg:mr-2" />
+              <span className="text-sm lg:text-base xl:text-lg">{user?.name || user?.username || 'Profile'}</span>
+              <ChevronDown className="w-3 h-3 lg:w-4 lg:h-4 ml-1" />
+            </button>
+
+            {showProfileDropdown && (
+              <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                <Link
+                  href="/profile"
+                  className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors"
+                  onClick={() => setShowProfileDropdown(false)}
+                >
+                  <Settings className="w-4 h-4 mr-3" />
+                  Profile Settings
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center px-4 py-3 text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut className="w-4 h-4 mr-3" />
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <Link
+            href="/sign-in"
+            className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-base lg:text-lg xl:text-xl text-white font-medium px-3 lg:px-4 xl:px-6 py-2 lg:py-2 xl:py-3 rounded-lg lg:rounded-xl transition w-full lg:w-auto justify-center mx-5 mb-6 lg:mb-0 lg:mx-0"
+          >
+            <User className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 mr-1 lg:mr-2" />
+            <span className="text-sm lg:text-base xl:text-lg">Login</span>
+          </Link>
+        )}
       </div>
     </nav>
   );
