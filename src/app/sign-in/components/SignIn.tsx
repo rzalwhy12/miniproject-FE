@@ -8,7 +8,11 @@ import { toast } from 'sonner';
 import { useAppDispatch } from '@/lib/redux/hook';
 import { hideLoading, showLoading } from '@/lib/redux/features/loadingSlice';
 import { useRouter } from 'next/navigation';
+
 import { useAuth } from '@/contexts/AuthContext';
+
+
+import { signIn } from '@/lib/redux/features/accountSlice';
 
 const SignIn: React.FC = () => {
   const formRef = useRef<HTMLFormElement>(null);
@@ -39,6 +43,7 @@ const SignIn: React.FC = () => {
 
       const res = await apiCall.post('/auth/login', payload);
       dispatch(hideLoading());
+
 
       console.log('Full response:', res);
       console.log('Response data:', res.data);
@@ -129,6 +134,15 @@ const SignIn: React.FC = () => {
         toast.error('Login failed: Invalid user data received');
         return;
       }
+
+      toast.success(res.data.result.message, {
+        duration: 3000
+      });
+      dispatch(signIn(res.data.result.data));
+      const token = res.data.result.token;
+      localStorage.setItem('token', token);
+      router.push('/');
+
     } catch (error: unknown) {
       dispatch(hideLoading());
       showError(error);

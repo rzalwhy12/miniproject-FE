@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { usePathname } from 'next/navigation';
-import {  InstagramIcon, FacebookIcon, X, YoutubeIcon } from 'lucide-react';
+import { InstagramIcon, FacebookIcon, X, YoutubeIcon } from 'lucide-react';
 
 export const ShowFooter = () => {
   const pathname = usePathname();
@@ -11,7 +11,8 @@ export const ShowFooter = () => {
   if (
     pathname === '/sign-in' ||
     pathname === '/sign-up' ||
-    pathname.startsWith('/verify')
+    pathname.startsWith('/verify') ||
+    pathname.startsWith('/dashboard')
   )
     return null;
   return <Footer />;
