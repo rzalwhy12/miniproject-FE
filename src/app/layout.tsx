@@ -3,6 +3,7 @@ import './globals.css';
 import StoreProvider from './StoreProvider';
 import { Toaster } from 'sonner';
 import { ShowFooter } from '@/components/Footer';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 import LoadingAnimation from '@/components/Loading';
 import { ShowNavbar } from '@/components/Navbar';
@@ -25,15 +26,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <StoreProvider>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          <ShowNavbar />
-          <LoadingAnimation />
-          {children}
-          <Toaster richColors position="top-right" />
-          <ShowFooter />
-        </body>
+        <AuthProvider>
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          >
+            <ShowNavbar />
+            <LoadingAnimation />
+            {children}
+            <Toaster richColors position="top-right" />
+            <ShowFooter />
+          </body>
+        </AuthProvider>
       </StoreProvider>
     </html>
   );

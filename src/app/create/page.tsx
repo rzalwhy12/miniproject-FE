@@ -1,12 +1,17 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Upload, Plus, Edit, Trash2, Sparkles, Zap, Calendar, MapPin, Settings, Globe } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 const CreateEventPage = () => {
+    const { user, isAuthenticated, loading: authLoading } = useAuth();
+    const router = useRouter();
+
     const [form, setForm] = useState({
         name: "",
         description: "",
@@ -18,6 +23,33 @@ const CreateEventPage = () => {
         syaratKetentuan: "",
         image: null as File | null,
     });
+
+    // Redirect to login if not authenticated
+    useEffect(() => {
+        if (!authLoading && !isAuthenticated) {
+            router.push('/sign-in');
+        }
+    }, [isAuthenticated, authLoading, router]);
+
+    // Show loading screen while checking authentication
+    if (authLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+                <div className="text-center">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl mb-6 shadow-lg animate-pulse">
+                        <Sparkles className="w-8 h-8 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-semibold text-gray-800 mb-2">Loading...</h2>
+                    <p className="text-gray-600">Checking authentication status</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Don't render the form if not authenticated (will redirect)
+    if (!isAuthenticated) {
+        return null;
+    }
 
     const [tickets, setTickets] = useState([
         { id: 1, name: "Regular", price: "200000", description: "Regular ticket" }
