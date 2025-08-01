@@ -45,6 +45,8 @@ const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
 
   const isLogin = useAppSelector((state) => state.account.isLogin);
+  const userName = useAppSelector((state) => state.account.name);
+  const userUsername = useAppSelector((state) => state.account.username);
   const dispatch = useAppDispatch();
 
   const handleLangSelect = (lang: string) => {
@@ -141,19 +143,8 @@ const Navbar = () => {
           <Newspaper className="w-6 h-6 sm:w-7 sm:h-7 mr-2" />
           Blogs
         </a>
-        <Link
-          href="/dashboard"
-          className="flex items-center bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium transition
-    text-sm lg:text-base xl:text-lg
-    px-3 lg:px-4 xl:px-6 py-2 lg:py-2 xl:py-3
-    rounded-lg lg:rounded-xl
-    w-[200px] lg:w-auto justify-center mx-5 mb-6 lg:mb-0 lg:mx-0"
-        >
-          <span className="text-sm lg:text-base xl:text-lg">Dashboard</span>
-        </Link>
-
         {/* Create Event Button */}
-        {isAuthenticated ? (
+        {isLogin && (
           <Link
             href="/create"
             className="flex items-center bg-pink-500 hover:bg-pink-600 text-base lg:text-lg xl:text-xl text-white font-medium px-3 lg:px-4 xl:px-6 py-2 lg:py-2 xl:py-3 rounded-lg lg:rounded-xl transition w-[200px] lg:w-auto justify-center mx-5 mt-4 mb-3 lg:mt-0 lg:mb-0 lg:mx-0"
@@ -163,21 +154,9 @@ const Navbar = () => {
               Create Event
             </span>
           </Link>
-        ) : (
-          <Link
-            href="/sign-in"
-            className="flex items-center bg-pink-500 hover:bg-pink-600 text-base lg:text-lg xl:text-xl text-white font-medium px-3 lg:px-4 xl:px-6 py-2 lg:py-2 xl:py-3 rounded-lg lg:rounded-xl transition w-[200px] lg:w-auto justify-center mx-5 mt-4 mb-3 lg:mt-0 lg:mb-0 lg:mx-0"
-            title="Login required to create events"
-          >
-            <Plus className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 mr-1 lg:mr-2" />
-            <span className="text-sm lg:text-base xl:text-lg">
-              Create Event
-            </span>
-          </Link>
         )}
-
         {/* Login/Profile Button */}
-        {isAuthenticated ? (
+        {isLogin ? (
           <div className="relative">
             <button
               onClick={() => setShowProfileDropdown(!showProfileDropdown)}
@@ -185,16 +164,12 @@ const Navbar = () => {
             >
               <UserCircle className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 mr-1 lg:mr-2" />
               <span className="text-sm lg:text-base xl:text-lg">
-                {user?.name || user?.username || 'Profile'}
+                {userName || userUsername || 'Profil'}
               </span>
               <ChevronDown className="w-3 h-3 lg:w-4 lg:h-4 ml-1" />
             </button>
-
             {showProfileDropdown && (
-              <div
-                className="absolute right-0 top-full mt-1 w-full lg:w-40
-                              bg-white border border-gray-200 rounded-md shadow-lg z-50 overflow-hidden"
-              >
+              <div className="absolute right-0 top-full mt-1 w-full lg:w-40 bg-white border border-gray-200 rounded-md shadow-lg z-50 overflow-hidden">
                 <Link
                   href="/profile"
                   className="flex items-center px-3 py-2 lg:py-2 text-gray-700 hover:bg-gray-50 transition-colors text-sm"
@@ -203,9 +178,17 @@ const Navbar = () => {
                   <Settings className="w-4 h-4 mr-2" />
                   Profile
                 </Link>
+                <Link
+                  href="/dashboard"
+                  className="flex items-center px-3 py-2 lg:py-2 text-gray-700 hover:bg-gray-50 transition-colors text-sm"
+                  onClick={() => setShowProfileDropdown(false)}
+                >
+                  <Ticket className="w-4 h-4 mr-2" />
+                  Dashboard
+                </Link>
                 <div className="border-t border-gray-100"></div>
                 <button
-                  onClick={handleLogout}
+                  onClick={signOut}
                   className="w-full flex items-center px-3 py-2 lg:py-2 text-red-600 hover:bg-red-50 transition-colors text-sm"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
@@ -217,40 +200,11 @@ const Navbar = () => {
         ) : (
           <Link
             href="/sign-in"
-            className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-base lg:text-lg xl:text-xl text-white font-medium px-3 lg:px-4 xl:px-6 py-2 lg:py-2 xl:py-3 rounded-lg lg:rounded-xl transition w-full lg:w-auto justify-center mx-5 mb-6 lg:mb-0 lg:mx-0"
-          >
-            <User className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 mr-1 lg:mr-2" />
-            <span className="text-sm lg:text-base xl:text-lg">Login</span>
-          </Link>
-        )}
-
-        {/* Login Button */}
-        {!isLogin && (
-          <Link
-            href="/sign-in"
-            className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition
-               text-sm lg:text-base xl:text-lg
-               px-3 lg:px-4 xl:px-6 py-2 lg:py-2 xl:py-3
-               rounded-lg lg:rounded-xl
-               w-[200px] lg:w-auto justify-center mx-5 mb-6 lg:mb-0 lg:mx-0"
+            className="flex items-center bg-pink-600 hover:bg-pink-700 text-white font-medium transition text-sm lg:text-base xl:text-lg px-3 lg:px-4 xl:px-6 py-2 lg:py-2 xl:py-3 rounded-lg lg:rounded-xl w-[200px] lg:w-auto justify-center mx-5 mb-6 lg:mb-0 lg:mx-0"
           >
             <User className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 mr-1 lg:mr-2" />
             <span>Login</span>
           </Link>
-        )}
-
-        {isLogin && (
-          <button
-            onClick={signOut}
-            className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white font-medium transition
-               text-sm lg:text-base xl:text-lg
-               px-3 lg:px-4 xl:px-6 py-2 lg:py-2 xl:py-3
-               rounded-lg lg:rounded-xl
-               w-[200px] lg:w-auto justify-center mx-5 mb-6 lg:mb-0 lg:mx-0"
-          >
-            <LogOutIcon className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 mr-1 lg:mr-2" />
-            <span>Sign Out</span>
-          </button>
         )}
       </div>
     </nav>
