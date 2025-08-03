@@ -1,9 +1,19 @@
 'use client';
-import React from 'react';
+import React, { useEffect } from 'react';
 import SignIn from '@/app/sign-in/components/SignIn';
 import Link from 'next/link';
+import { useAppSelector } from '@/lib/redux/hook';
+import { useRouter } from 'next/navigation';
 
 const SignInPage: React.FC = () => {
+  const router = useRouter();
+  const { isLogin, checking } = useAppSelector((state) => state.account);
+
+  useEffect(() => {
+    if (isLogin && !checking) {
+      router.replace('/');
+    }
+  }, [isLogin, checking]);
   return (
     <>
       {/* Mobile Layout */}
@@ -92,7 +102,6 @@ const SignInPage: React.FC = () => {
       <div className="hidden lg:flex min-h-screen">
         {/* Left Side - Welcome Section */}
         <div className="lg:w-1/2 bg-gradient-to-br from-gray-900 via-gray-800 to-black relative overflow-hidden">
-
           {/* Background Image/Pattern */}
           <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-pink-900/20 to-indigo-900/20"></div>
           <div className="absolute inset-0 opacity-30">

@@ -15,7 +15,9 @@ apiCall.interceptors.response.use(
 export const showError = (error: unknown) => {
   if (error instanceof AppError) {
     toast.error(error.message);
+    console.log(error);
   } else if (error instanceof Error) {
+    console.log(error);
     toast.error(error.message);
   } else {
     toast.error('something went wrong');

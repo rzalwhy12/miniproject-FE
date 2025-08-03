@@ -1,29 +1,43 @@
-import { IAccount } from '@/types/accounts.type';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface IAccountState extends IAccount {
+interface IAccountState {
+  name: string;
+  role: string;
   isLogin: boolean;
+  checking: boolean;
 }
 
 const initialState: IAccountState = {
   name: '',
-  username: '',
-  isLogin: false
+  role: '',
+  isLogin: false,
+  checking: true
 };
 
 const accountSlice = createSlice({
   name: 'account',
   initialState,
   reducers: {
-    signIn: (state, action: PayloadAction<IAccount>) => {
-      Object.assign(state, action.payload);
+    userLogin: (
+      state,
+      action: PayloadAction<Omit<IAccountState, 'isLogin' | 'checking'>>
+    ) => {
+      state.name = action.payload.name;
+      state.role = action.payload.role;
       state.isLogin = true;
+      state.checking = false;
     },
-    userOut: () => {
-      return { ...initialState };
+    userLogout: (state) => {
+      state.name = '';
+      state.role = '';
+      state.isLogin = false;
+      state.checking = false;
+    },
+    setChecking: (state, action: PayloadAction<boolean>) => {
+      state.checking = action.payload;
     }
   }
 });
 
-export const { signIn, userOut } = accountSlice.actions;
+export const { userLogin, userLogout, setChecking } = accountSlice.actions;
 export default accountSlice.reducer;

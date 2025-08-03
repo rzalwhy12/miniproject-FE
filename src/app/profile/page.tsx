@@ -1,32 +1,8 @@
 'use client';
 import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 import { User, Mail, Calendar, Settings } from 'lucide-react';
 
 const ProfilePage = () => {
-  const { user, isAuthenticated, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push('/sign-in');
-    }
-  }, [isAuthenticated, loading, router]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-500"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated || !user) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
@@ -35,7 +11,9 @@ const ProfilePage = () => {
             <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mb-4">
               <User className="w-12 h-12 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Profile Settings</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              Profile Settings
+            </h1>
             <p className="text-gray-600">Manage your account information</p>
           </div>
 
@@ -44,16 +22,22 @@ const ProfilePage = () => {
               <div className="bg-gradient-to-r from-gray-50 to-white p-6 rounded-xl border border-gray-200">
                 <div className="flex items-center mb-4">
                   <User className="w-5 h-5 text-purple-500 mr-3" />
-                  <h3 className="text-lg font-semibold text-gray-800">Personal Information</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Personal Information
+                  </h3>
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                    <p className="text-gray-900 font-medium">{user.name}</p>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Name
+                    </label>
+                    <p className="text-gray-900 font-medium">{}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">User ID</label>
-                    <p className="text-gray-600">#{user.id}</p>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      User ID
+                    </label>
+                    <p className="text-gray-600">#{}</p>
                   </div>
                 </div>
               </div>
@@ -61,11 +45,15 @@ const ProfilePage = () => {
               <div className="bg-gradient-to-r from-gray-50 to-white p-6 rounded-xl border border-gray-200">
                 <div className="flex items-center mb-4">
                   <Mail className="w-5 h-5 text-purple-500 mr-3" />
-                  <h3 className="text-lg font-semibold text-gray-800">Contact Information</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Contact Information
+                  </h3>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <p className="text-gray-900">{user.email}</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
+                  <p className="text-gray-900">{}</p>
                 </div>
               </div>
             </div>
@@ -74,7 +62,9 @@ const ProfilePage = () => {
               <div className="bg-gradient-to-r from-gray-50 to-white p-6 rounded-xl border border-gray-200">
                 <div className="flex items-center mb-4">
                   <Calendar className="w-5 h-5 text-purple-500 mr-3" />
-                  <h3 className="text-lg font-semibold text-gray-800">Account Status</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Account Status
+                  </h3>
                 </div>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -93,7 +83,9 @@ const ProfilePage = () => {
               <div className="bg-gradient-to-r from-gray-50 to-white p-6 rounded-xl border border-gray-200">
                 <div className="flex items-center mb-4">
                   <Settings className="w-5 h-5 text-purple-500 mr-3" />
-                  <h3 className="text-lg font-semibold text-gray-800">Quick Actions</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Quick Actions
+                  </h3>
                 </div>
                 <div className="space-y-3">
                   <button className="w-full text-left px-4 py-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
