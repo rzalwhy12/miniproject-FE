@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   Phone,
@@ -11,21 +11,18 @@ import {
   X,
   Plus,
   LogOut,
-  Settings,
   UserCircle,
-  LogOutIcon
+  Repeat
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hook';
-import { showError } from '@/helper/interceptor';
-import { signIn, userOut } from '@/lib/redux/features/accountSlice';
 import { toast } from 'sonner';
+import { userLogin, userLogout } from '@/lib/redux/features/accountSlice';
 import { apiCall } from '@/helper/apiCall';
+import { showError } from '@/helper/interceptor';
 
 export const ShowNavbar = () => {
   const pathname = usePathname();
-
   if (
     pathname === '/sign-in' ||
     pathname === '/sign-up' ||
@@ -33,179 +30,194 @@ export const ShowNavbar = () => {
     pathname === '/dashboard'
   )
     return null;
+
   return <Navbar />;
 };
 
 const Navbar = () => {
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const [selectedLang, setSelectedLang] = useState('EN');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const { user, isAuthenticated, logout } = useAuth();
-
-  const isLogin = useAppSelector((state) => state.account.isLogin);
-  const userName = useAppSelector((state) => state.account.name);
-  const userUsername = useAppSelector((state) => state.account.username);
   const dispatch = useAppDispatch();
+  const { isLogin, name, role } = useAppSelector((state) => state.account);
+  const dropdownRef = useRef(null);
 
-  const handleLangSelect = (lang: string) => {
-    setSelectedLang(lang);
-    setShowDropdown(false);
-  };
-  const checkLogin = async () => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const res = await apiCall.get('/auth/keep-login', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        dispatch(signIn(res.data.result.data));
-      } catch (error: unknown) {
-        showError(error);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !(dropdownRef.current as any).contains(e.target)
+      ) {
+        setShowDropdown(false);
       }
-    }
-  };
-
-  const handleLogout = () => {
-    logout();
-    setShowProfileDropdown(false);
-    setMobileMenuOpen(false);
-  };
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const signOut = () => {
     localStorage.removeItem('token');
-    toast.success('Sign Out');
-    dispatch(userOut());
+    dispatch(userLogout());
+    setShowDropdown(false);
+    setMobileMenuOpen(false);
+    toast.success('Signed Out');
   };
 
-  useEffect(() => {
-    checkLogin();
-  }, []);
+  const handleSwitchRole = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const targetRoleId = role.trim().toUpperCase() === 'ORGANIZER' ? 1 : 2;
+
+      const res = await apiCall.get(`/auth/switch-role/${targetRoleId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      localStorage.setItem('token', res.data.result.token);
+      dispatch(userLogin(res.data.result.data));
+      setShowDropdown(false);
+
+      const roleName = res.data.result.data.role.toLowerCase();
+      toast.success(`You're now a ${roleName}`);
+    } catch (err) {
+      showError(err);
+    }
+  };
 
   return (
-    <nav className="w-full flex items-center justify-between px-4 sm:px-8 lg:px-8 xl:px-16 py-4 sm:py-6 lg:py-4 xl:py-8 bg-white relative z-10">
-      {/* Logo */}
-      <div className="flex items-center">
-        <img
-          src="/images/logo/lokaAdicaralogo.png"
-          alt="LokaAdicara Logo"
-          className="h-12 sm:h-20 lg:h-16 xl:h-28 w-auto object-contain"
-        />
-      </div>
-      {/* Hamburger for mobile */}
-      <button
-        className="lg:hidden flex items-center text-gray-700 focus:outline-none z-50"
-        onClick={() => setMobileMenuOpen((prev) => !prev)}
-        aria-label="Toggle menu"
-        type="button"
-      >
-        {mobileMenuOpen ? (
-          <X className="w-8 h-8" />
-        ) : (
-          <Menu className="w-8 h-8" />
-        )}
-      </button>
-      {/* Menu */}
-      <div
-        className={`
-          flex-col
-          fixed top-0 left-0 h-screen w-4/5 max-w-xs bg-white shadow-md z-20 transition-transform duration-[2000ms] ease-in-out transform
-          ${mobileMenuOpen ? 'translate-x-0 flex' : '-translate-x-full hidden'}
-          lg:static lg:flex lg:flex-row lg:items-center lg:h-auto lg:w-auto lg:max-w-none lg:bg-transparent lg:shadow-none lg:z-auto lg:transition-none lg:transform-none lg:translate-x-0
-          gap-4 sm:gap-8 lg:gap-12
-        `}
-        style={{ transitionProperty: 'transform' }}
-      >
-        {/* Contact us */}
-        <a
-          href="#contact"
-          className="ml-5 flex items-center text-lg sm:text-xl text-gray-500 hover:text-pink-500 transition px-4 py-2 md:p-0 mt-20 lg:mt-0"
+    <nav className="sticky top-0 z-50 bg-white shadow-sm transition-all">
+      <div className="max-w-screen-xl mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4">
+        {/* Logo */}
+        <Link href="/" className="flex items-center">
+          <img
+            src="/images/logo/lokaAdicaralogo.png"
+            alt="LokaAdicara"
+            className="h-10 sm:h-12 object-contain"
+          />
+        </Link>
+
+        {/* Hamburger */}
+        <button
+          className="lg:hidden text-gray-600"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         >
-          <Phone className="w-6 h-6 sm:w-7 sm:h-7 mr-2" />
-          Contact us
-        </a>
-        {/* Tickets */}
-        <a
-          href="#tickets"
-          className="ml-5 flex items-center text-lg sm:text-xl text-gray-500 hover:text-pink-500 transition px-4 py-2 md:p-0"
+          {mobileMenuOpen ? (
+            <X className="w-6 h-6" />
+          ) : (
+            <Menu className="w-6 h-6" />
+          )}
+        </button>
+
+        {/* Menu */}
+        <div
+          className={`fixed top-0 left-0 h-screen w-4/5 max-w-xs bg-white z-40 shadow-md flex flex-col pt-20 gap-4 px-6 transition-transform duration-300 ease-in-out transform
+          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
+          lg:static lg:translate-x-0 lg:flex lg:flex-row lg:items-center lg:justify-end lg:h-auto lg:w-auto lg:bg-transparent lg:shadow-none lg:pt-0 lg:gap-6 xl:gap-8
+          `}
         >
-          <Ticket className="w-6 h-6 sm:w-7 sm:h-7 mr-2" />
-          Tickets
-        </a>
-        {/* Blogs */}
-        <a
-          href="#blogs"
-          className="ml-5 flex items-center text-lg sm:text-xl text-gray-500 hover:text-pink-500 transition px-4 py-2 md:p-0"
-        >
-          <Newspaper className="w-6 h-6 sm:w-7 sm:h-7 mr-2" />
-          Blogs
-        </a>
-        {/* Create Event Button */}
-        {isLogin && (
-          <Link
-            href="/create"
-            className="flex items-center bg-pink-500 hover:bg-pink-600 text-base lg:text-lg xl:text-xl text-white font-medium px-3 lg:px-4 xl:px-6 py-2 lg:py-2 xl:py-3 rounded-lg lg:rounded-xl transition w-[200px] lg:w-auto justify-center mx-5 mt-4 mb-3 lg:mt-0 lg:mb-0 lg:mx-0"
+          {/* Left Nav */}
+          <a
+            href="#contact"
+            className="flex items-center gap-2 text-gray-600 hover:text-pink-500 text-sm sm:text-base"
           >
-            <Plus className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 mr-1 lg:mr-2" />
-            <span className="text-sm lg:text-base xl:text-lg">
-              Create Event
-            </span>
-          </Link>
-        )}
-        {/* Login/Profile Button */}
-        {isLogin ? (
-          <div className="relative">
-            <button
-              onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-              className="flex items-center bg-purple-600 hover:bg-purple-700 text-base lg:text-lg xl:text-xl text-white font-medium px-3 lg:px-4 xl:px-6 py-2 lg:py-2 xl:py-3 rounded-lg lg:rounded-xl transition w-[200px] lg:w-auto justify-center mx-5 mb-6 lg:mb-0 lg:mx-0"
+            <Phone className="w-5 h-5" />
+            Contact
+          </a>
+          <a
+            href="#tickets"
+            className="flex items-center gap-2 text-gray-600 hover:text-pink-500 text-sm sm:text-base 
+            "
+          >
+            <Ticket className="w-5 h-5" />
+            Tickets
+          </a>
+          <a
+            href="#blogs"
+            className="flex items-center gap-2 text-gray-600 hover:text-pink-500 text-sm sm:text-base"
+          >
+            <Newspaper className="w-5 h-5" />
+            Blogs
+          </a>
+
+          {/* Action Buttons */}
+          {isLogin && role === 'ORGANIZER' && (
+            <Link
+              href="/create"
+              className="flex items-center gap-2 bg-pink-500 hover:bg-pink-600 text-white text-sm px-3 py-1.5 rounded-md"
             >
-              <UserCircle className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 mr-1 lg:mr-2" />
-              <span className="text-sm lg:text-base xl:text-lg">
-                {userName || userUsername || 'Profil'}
-              </span>
-              <ChevronDown className="w-3 h-3 lg:w-4 lg:h-4 ml-1" />
-            </button>
-            {showProfileDropdown && (
-              <div className="absolute right-0 top-full mt-1 w-full lg:w-40 bg-white border border-gray-200 rounded-md shadow-lg z-50 overflow-hidden">
-                <Link
-                  href="/profile"
-                  className="flex items-center px-3 py-2 lg:py-2 text-gray-700 hover:bg-gray-50 transition-colors text-sm"
-                  onClick={() => setShowProfileDropdown(false)}
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Profile
-                </Link>
-                <Link
-                  href="/dashboard"
-                  className="flex items-center px-3 py-2 lg:py-2 text-gray-700 hover:bg-gray-50 transition-colors text-sm"
-                  onClick={() => setShowProfileDropdown(false)}
-                >
-                  <Ticket className="w-4 h-4 mr-2" />
-                  Dashboard
-                </Link>
-                <div className="border-t border-gray-100"></div>
-                <button
-                  onClick={signOut}
-                  className="w-full flex items-center px-3 py-2 lg:py-2 text-red-600 hover:bg-red-50 transition-colors text-sm"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <Link
-            href="/sign-in"
-            className="flex items-center bg-pink-600 hover:bg-pink-700 text-white font-medium transition text-sm lg:text-base xl:text-lg px-3 lg:px-4 xl:px-6 py-2 lg:py-2 xl:py-3 rounded-lg lg:rounded-xl w-[200px] lg:w-auto justify-center mx-5 mb-6 lg:mb-0 lg:mx-0"
-          >
-            <User className="w-4 h-4 lg:w-5 lg:h-5 xl:w-6 xl:h-6 mr-1 lg:mr-2" />
-            <span>Login</span>
-          </Link>
-        )}
+              <Plus className="w-4 h-4" />
+              Create
+            </Link>
+          )}
+
+          {isLogin && role === 'CUSTOMER' && (
+            <Link
+              href="/my-tickets"
+              className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm px-3 py-1.5 rounded-md"
+            >
+              <Ticket className="w-4 h-4" />
+              My Tickets
+            </Link>
+          )}
+
+          {/* Profile/Login */}
+          {isLogin ? (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white text-sm px-3 py-1.5 rounded-md max-w-[150px] sm:max-w-[200px]"
+              >
+                <UserCircle className="w-4 h-4 shrink-0" />
+                <span className="truncate whitespace-nowrap overflow-hidden">
+                  {name}
+                </span>
+                <ChevronDown className="w-3 h-3 shrink-0" />
+              </button>
+
+              {showDropdown && (
+                <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-50 text-sm">
+                  <Link
+                    href="/profile"
+                    onClick={() => setShowDropdown(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50"
+                  >
+                    <User className="w-4 h-4" />
+                    Profile
+                  </Link>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setShowDropdown(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50"
+                  >
+                    <Ticket className="w-4 h-4" />
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={handleSwitchRole}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50"
+                  >
+                    <Repeat className="w-4 h-4" />
+                    Switch to {role === 'CUSTOMER' ? 'Organizer' : 'Customer'}
+                  </button>
+                  <div className="border-t border-gray-100" />
+                  <button
+                    onClick={signOut}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/sign-in"
+              className="flex items-center gap-2 bg-pink-600 hover:bg-pink-700 text-white text-sm px-3 py-1.5 rounded-md"
+            >
+              <User className="w-4 h-4" />
+              Login
+            </Link>
+          )}
+        </div>
       </div>
     </nav>
   );

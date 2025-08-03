@@ -1,9 +1,18 @@
 'use client';
-import React from 'react';
+import React, { useEffect } from 'react';
 import SignUp from './components/SignUp';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAppSelector } from '@/lib/redux/hook';
 
 const SignUpPage: React.FC = () => {
+  const router = useRouter();
+  const { isLogin, checking } = useAppSelector((state) => state.account);
+  useEffect(() => {
+    if (isLogin && !checking) {
+      router.replace('/');
+    }
+  }, [isLogin, checking]);
   return (
     <>
       {/* Mobile Layout */}
