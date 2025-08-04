@@ -141,7 +141,7 @@ const TicketSection: React.FC = () => {
                     dispatch(
                       updateTicket({
                         id: ticket.id,
-                        field: 'description',
+                        field: 'descriptionTicket',
                         value: e.target.value
                       })
                     )
