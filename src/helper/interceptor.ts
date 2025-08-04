@@ -18,7 +18,6 @@ export const showError = (error: unknown) => {
       return;
     }
     toast.error(error.message);
-    console.log(error);
   } else if (error instanceof Error) {
     console.log(error);
     toast.error(error.message);
