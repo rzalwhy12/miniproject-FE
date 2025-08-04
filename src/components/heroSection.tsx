@@ -34,7 +34,7 @@ const HeroSection: React.FC = () => {
     setActiveIndex((prev) => (prev === events.length - 1 ? 0 : prev + 1));
 
   return (
-    <section className="w-full flex flex-col items-center justify-center bg-white">
+    <section className="w-full flex flex-col items-center justify-center bg-white mt-[105px]">
       <div className="relative w-full flex flex-col items-center justify-center">
         {/* Main Content & Image, di atas Search & Tags */}
         <div className="flex flex-col xl:flex-row items-center justify-between w-full max-w-full sm:max-w-2xl md:max-w-[1500px] mx-auto py-2 sm:py-4 gap-2 sm:gap-6 mt-2 sm:mt-4 md:mt-8 z-1 relative">
@@ -111,7 +111,7 @@ const HeroSection: React.FC = () => {
             <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-gray-400 mb-3 sm:mb-4 md:mb-6 lg:mb-10 w-full break-words">
               {event.note}
             </p>
-            <Button className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 xs:px-6 xs:py-3 sm:px-8 sm:py-4 md:px-10 md:py-5 lg:px-14 lg:py-6 xl:px-16 xl:py-7 rounded-2xl text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold shadow-lg mb-4 xs:mb-6 sm:mb-10 md:mb-14 lg:mb-20 xl:mb-[180px] min-w-[90px] xs:min-w-[110px] sm:min-w-[140px] md:min-w-[180px] lg:min-w-[220px] xl:min-w-[260px] transition-all duration-200 w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto xl:mx-0">
+            <Button className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 xs:px-6 xs:py-3 sm:px-8 sm:py-4 md:px-10 md:py-5 lg:px-14 lg:py-6 xl:px-16 xl:py-7 rounded-2xl text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold shadow-lg mb-4 xs:mb-6 sm:mb-10 md:mb-14 lg:mb-30 xl:mb-[180px] min-w-[90px] xs:min-w-[110px] sm:min-w-[140px] md:min-w-[180px] lg:min-w-[220px] xl:min-w-[260px] transition-all duration-200 w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto xl:mx-0">
               Get Ticket
             </Button>
           </div>
