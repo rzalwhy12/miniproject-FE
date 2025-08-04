@@ -14,6 +14,9 @@ apiCall.interceptors.response.use(
 
 export const showError = (error: unknown) => {
   if (error instanceof AppError) {
+    if (error.message === 'Token expired') {
+      return;
+    }
     toast.error(error.message);
     console.log(error);
   } else if (error instanceof Error) {
