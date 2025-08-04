@@ -108,7 +108,7 @@ const Navbar = () => {
 
         {/* Menu */}
         <div
-          className={`fixed top-0 left-0 h-screen w-4/5 max-w-xs bg-white z-40 shadow-md flex flex-col pt-20 gap-4 px-6 transition-transform duration-300 ease-in-out transform
+          className={`fixed top-0 left-0 h-screen w-4/5 bg-white z-40 shadow-md flex flex-col pt-20 gap-4 px-6 transition-transform duration-300 ease-in-out transform
           ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
           lg:static lg:translate-x-0 lg:flex lg:flex-row lg:items-center lg:justify-end lg:h-auto lg:w-auto lg:bg-transparent lg:shadow-none lg:pt-0 lg:gap-6 xl:gap-8
           `}
