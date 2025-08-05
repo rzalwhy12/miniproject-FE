@@ -31,7 +31,7 @@ const Settings = () => {
     }
 
     if (newPassword !== confirmPassword) {
-      toast.error('Password baru dan konfirmasi tidak cocok!');
+      toast.warning('Password baru dan konfirmasi tidak cocok!');
       return;
     }
 

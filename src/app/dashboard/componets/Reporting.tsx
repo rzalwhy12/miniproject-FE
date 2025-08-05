@@ -40,7 +40,6 @@ const Reporting = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    // Simulasi data dummy
     const dummyData: ReportingData[] = [
       {
         eventName: 'Hackathon 2025',

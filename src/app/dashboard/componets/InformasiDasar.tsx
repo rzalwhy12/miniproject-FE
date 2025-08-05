@@ -107,7 +107,7 @@ const EditProfileForm = () => {
         });
       }
 
-      toast.success(res.data.result.message || 'Berhasil memperbarui profil');
+      toast.success(res.data.result.message);
       getProfile();
     } catch (error) {
       showError(error);
