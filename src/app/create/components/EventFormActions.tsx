@@ -11,23 +11,27 @@ import { apiCall } from '@/helper/apiCall';
 import { showError } from '@/helper/interceptor';
 import { toast } from 'sonner';
 
-const EventFormActions: React.FC = () => {
+
+interface EventFormActionsProps {
+  image: File | null;
+}
+
+const EventFormActions: React.FC<EventFormActionsProps> = ({ image }) => {
   const dispatch = useAppDispatch();
   const form = useAppSelector((state) => state.createEvent);
   const user = useAppSelector((state) => state.account);
-
-  const formData = new FormData();
 
   const obBtSubmit = async (eventStatus: 'DRAFT' | 'PUBLISHED') => {
     dispatch(createEventForm({ loading: true, message: '' }));
 
     try {
       const token = localStorage.getItem('token');
-      if (!form.image) {
+      if (!image) {
         toast.warning('banner required');
         return;
       }
-      formData.append('banner', form.image);
+      const formData = new FormData();
+      formData.append('banner', image);
 
       const payload = {
         name: form.name,

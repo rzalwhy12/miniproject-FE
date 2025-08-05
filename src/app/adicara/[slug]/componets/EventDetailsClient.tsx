@@ -166,6 +166,10 @@ const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) =>
     return new Date(dateString).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   };
 
+  // State for map search
+  const [mapQuery, setMapQuery] = useState(eventData.location);
+  const [searchInput, setSearchInput] = useState(eventData.location);
+
   return (
     <div className="bg-gray-50 font-sans">
       <div className="max-w-7xl mx-auto py-8 px-4">
@@ -231,7 +235,53 @@ const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) =>
               <p className="text-lg"><strong>Address:</strong> {eventData.location}</p>
             </div>
             <div className="rounded-2xl overflow-hidden border-2 border-gray-200">
-              <img src="/images/banner/1.png" alt="Map" className="w-full h-72 object-cover" />
+              {/* Google Maps Embed with Search Bar */}
+              <div className="relative w-full h-72">
+                <form
+                  className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex bg-white rounded-lg shadow-md p-2 gap-2"
+                  onSubmit={e => {
+                    e.preventDefault();
+                    if (searchInput) {
+                      setMapQuery(searchInput);
+                    }
+                  }}
+                >
+                  <input
+                    name="search"
+                    type="text"
+                    value={searchInput}
+                    onChange={e => setSearchInput(e.target.value)}
+                    className="px-3 py-1 rounded-l-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-400"
+                    placeholder="Search location..."
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-1 bg-pink-500 text-white rounded-r-lg hover:bg-pink-600 font-semibold"
+                  >
+                    Search
+                  </button>
+                  <button
+                    type="button"
+                    className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold ml-2"
+                    onClick={() => {
+                      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`);
+                    }}
+                  >
+                    Open in Google Maps
+                  </button>
+                </form>
+                <iframe
+                  title="Event Location Map"
+                  width="100%"
+                  height="100%"
+                  className="w-full h-72 rounded-2xl border-0"
+                  style={{ filter: 'grayscale(0.2)' }}
+                  loading="lazy"
+                  allowFullScreen
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`}
+                ></iframe>
+              </div>
             </div>
           </div>
 
