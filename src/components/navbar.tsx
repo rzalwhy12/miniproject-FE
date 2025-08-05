@@ -122,7 +122,7 @@ const Navbar = () => {
             Contact
           </a>
           <a
-            href="#tickets"
+            href="/tickets"
             className="flex items-center gap-2 text-gray-600 hover:text-pink-500 text-sm sm:text-base 
             "
           >

@@ -1,450 +1,341 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react'; // Import useMemo
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  EventDetail,
-  Ticket,
-  Voucher,
-  categoryOptions,
-  statusOptions
-} from '../../../../types/types';
+import { EventDetail, Ticket as TicketType, Review, Suggestion } from '../../../../types/types';
+import { MapPin, Star } from 'lucide-react';
+import { apiCall } from '@/helper/apiCall';
+import Link from 'next/link';
+import { useAppSelector, useAppDispatch } from '@/lib/redux/hook';
+import { userLogin } from '@/lib/redux/features/accountSlice';
+import { toast } from 'sonner';
 
 interface EventDetailsClientProps {
   eventData: EventDetail;
 }
 
-const EventDetailsClient: React.FC<EventDetailsClientProps> = ({
-  eventData
-}) => {
+const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) => {
   const router = useRouter();
+  // Ambil user id dari Redux: state.account.id (bukan userId)
+  const { isLogin, id } = useAppSelector((state) => state.account);
+  const dispatch = useAppDispatch();
 
-  const [selectedTicketType, setSelectedTicketType] = useState<Ticket | null>(
-    null
-  );
-  const [quantity, setQuantity] = useState<number>(1);
-  const [showCheckoutModal, setShowCheckoutModal] = useState<boolean>(false);
-  const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null); // State baru untuk voucher
-
-  // Data voucher simulasi (jika tidak ada di eventData)
-  // Jika eventData.vouchers sudah ada, gunakan itu sebagai sumber utama
-  const availableVouchers: Voucher[] = useMemo(() => {
-    if (eventData.vouchers && eventData.vouchers.length > 0) {
-      return eventData.vouchers;
+  // Sync user from localStorage to Redux if not set
+  useEffect(() => {
+    if ((!id || id === 0) && typeof window !== 'undefined') {
+      const userIdFromStorage = localStorage.getItem('userId');
+      const name = localStorage.getItem('name');
+      const role = localStorage.getItem('role');
+      if (userIdFromStorage && name && role) {
+        dispatch(userLogin({ id: Number(userIdFromStorage), name, role }));
+      }
     }
-    // Data dummy jika eventData tidak menyediakan voucher
-    return [
-      {
-        discount: 0.1,
-        startDate: '2024-01-01T00:00:00Z',
-        endDate: '2025-12-31T23:59:59Z'
-      }, // 10% diskon
-      {
-        discount: 0.05,
-        startDate: '2025-07-01T00:00:00Z',
-        endDate: '2025-09-30T23:59:59Z'
-      }, // 5% diskon
-      {
-        discount: 0.2,
-        startDate: '2025-08-01T00:00:00Z',
-        endDate: '2025-08-10T23:59:59Z'
-      } // 20% diskon (promo singkat)
-    ];
-  }, [eventData.vouchers]); // Dependensi ke eventData.vouchers
+  }, []);
+  const [showCheckoutModal, setShowCheckoutModal] = useState<boolean>(false);
+  const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
 
-  // Filter voucher yang valid berdasarkan tanggal saat ini
-  const validVouchers = useMemo(() => {
-    const now = new Date();
-    return availableVouchers.filter((voucher) => {
-      const startDate = new Date(voucher.startDate);
-      const endDate = new Date(voucher.endDate);
-      return now >= startDate && now <= endDate;
-    });
-  }, [availableVouchers]);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [loading, setLoading] = useState({ reviews: true, suggestions: true });
+  const [error, setError] = useState<{ reviews: string | null, suggestions: string | null }>({ reviews: null, suggestions: null });
+
+  const [newReviewRating, setNewReviewRating] = useState(0);
+  const [newReviewComment, setNewReviewComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   useEffect(() => {
-    if (!selectedTicketType && eventData.ticketTypes.length > 0) {
-      const firstAvailableTicket = eventData.ticketTypes.find(
-        (ticket) => ticket.stock > 0
-      );
-      setSelectedTicketType(firstAvailableTicket || null);
-    }
-  }, [eventData, selectedTicketType]);
+    // Fetch Reviews
+    apiCall.get(`/review/event/${eventData.id}`)
+      .then(res => {
+        // Pastikan reviews selalu array
+        const arr = Array.isArray(res.data.result)
+          ? res.data.result
+          : res.data.result?.data || [];
+        setReviews(arr);
+      })
+      .catch(err => {
+        console.error("Failed to fetch reviews:", err);
+        setError(prev => ({ ...prev, reviews: "Could not load reviews." }));
+      })
+      .finally(() => {
+        setLoading(prev => ({ ...prev, reviews: false }));
+      });
 
-  // Hitung harga dasar sebelum diskon
-  const basePrice = useMemo(() => {
-    if (!selectedTicketType) return 0;
-    const price = parseFloat(selectedTicketType.price);
-    return isNaN(price) ? 0 : price * quantity;
-  }, [selectedTicketType, quantity]);
+    // Fetch Suggestions
+    apiCall.get('/event')
+      .then(res => {
+        const allEvents = res.data?.result?.data || [];
+        const filteredSuggestions = allEvents
+          .filter((event: Suggestion) => event.id !== eventData.id)
+          .slice(0, 4);
+        setSuggestions(filteredSuggestions);
+      })
+      .catch(err => {
+        console.error("Failed to fetch suggestions:", err);
+        setError(prev => ({ ...prev, suggestions: "Could not load suggestions." }));
+      })
+      .finally(() => {
+        setLoading(prev => ({ ...prev, suggestions: false }));
+      });
+  }, [eventData.id]);
 
-  // Hitung total harga setelah diskon
-  const totalPrice = useMemo(() => {
-    let price = basePrice;
-    if (selectedVoucher) {
-      // Asumsi: discount adalah persentase (e.g., 0.10 for 10%)
-      price = price * (1 - selectedVoucher.discount);
-    }
-    return price;
-  }, [basePrice, selectedVoucher]);
 
-  const handleTicketSelect = (ticket: Ticket) => {
-    if (ticket.stock <= 0) {
-      alert('Tiket ini sudah habis.');
-      return;
+  const handleViewTicketClick = (ticket: TicketType) => {
+    if (ticket.stock > 0) {
+      setSelectedTicket(ticket);
+      setShowCheckoutModal(true);
     }
-    setSelectedTicketType(ticket);
-    setQuantity(1);
-  };
-
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = parseInt(e.target.value);
-    if (isNaN(value) || value < 1) {
-      value = 1;
-    }
-    if (selectedTicketType && value > selectedTicketType.stock) {
-      value = selectedTicketType.stock;
-    }
-    setQuantity(value);
-  };
-
-  const handleVoucherChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const discountValue = parseFloat(e.target.value);
-    if (isNaN(discountValue)) {
-      setSelectedVoucher(null); // Jika memilih "Tidak Ada Voucher"
-    } else {
-      const voucher = validVouchers.find((v) => v.discount === discountValue);
-      setSelectedVoucher(voucher || null);
-    }
-  };
-
-  const handleCheckoutClick = () => {
-    if (!selectedTicketType || quantity <= 0) {
-      alert('Harap pilih tipe tiket dan jumlah yang valid.');
-      return;
-    }
-    setShowCheckoutModal(true);
   };
 
   const handleConfirmCheckout = () => {
-    if (!eventData || !selectedTicketType) return;
-
-    console.log('Melanjutkan Checkout:', {
-      eventId: eventData.id,
-      eventName: eventData.name,
-      ticketType: selectedTicketType.name,
-      quantity: quantity,
-      basePrice: basePrice,
-      discountApplied: selectedVoucher
-        ? (basePrice * selectedVoucher.discount).toLocaleString('id-ID')
-        : 0,
-      voucherUsed: selectedVoucher
-        ? `${selectedVoucher.discount * 100}%`
-        : 'None',
-      totalPrice: totalPrice
-    });
-
-    alert('Proses checkout dilanjutkan! (Ini adalah simulasi)');
+    if (!selectedTicket) return;
+    // Redirect to a transaction page, passing necessary info
+    router.push(`/transaction/${eventData.id}?ticketTypeId=${selectedTicket.id}&qty=1`);
     setShowCheckoutModal(false);
-    router.push(
-      `/checkout?eventId=${eventData.id}&ticketTypeId=${selectedTicketType.id}&qty=${quantity}&voucher=${selectedVoucher?.discount || ''}`
-    );
   };
 
-  const getStatusLabel = (value: string) => {
-    return (
-      statusOptions.find((option) => option.value === value)?.label || value
-    );
+  const handleReviewSubmit = async () => {
+    if (!isLogin) {
+      alert('You must be logged in to leave a review.');
+      router.push('/sign-in');
+      return;
+    }
+
+    if (newReviewRating === 0 || newReviewComment.trim() === '') {
+      alert('Please provide a rating and a comment.');
+      return;
+    }
+
+    setIsSubmittingReview(true);
+
+    try {
+      const payload = {
+        eventId: Number(eventData.id),
+        rating: Number(newReviewRating),
+        comment: newReviewComment,
+      };
+      // Debug: cek token di localStorage
+      const token = localStorage.getItem('token');
+      const res = await apiCall.post('/review/create', payload, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      toast.success(res.data.result.message)
+      
+      // Refetch reviews to show the new one
+      const reviewsRes = await apiCall.get(`/review/event/${eventData.id}`);
+      const arr = Array.isArray(reviewsRes.data.result)
+        ? reviewsRes.data.result
+        : reviewsRes.data.result?.data || [];
+      setReviews(arr);
+      
+
+      // Reset form
+      setNewReviewRating(0);
+      setNewReviewComment('');
+
+    } catch (error: any) {
+      console.error('Failed to submit review:', error);
+      alert(error?.message || 'There was an error submitting your review. Please try again.');
+    } finally {
+      setIsSubmittingReview(false);
+    }
   };
 
-  const getCategoryLabel = (value: string) => {
-    return (
-      categoryOptions.find((option) => option.value === value)?.label || value
-    );
+  const formatPrice = (price: string) => {
+    const num = parseFloat(price);
+    if (isNaN(num)) return "N/A";
+    return `Rp${num.toLocaleString('id-ID')}`;
   };
 
   const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    };
-    return new Date(dateString).toLocaleDateString('id-ID', options);
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.toLocaleString('en-US', { month: 'short' });
+    const year = date.getFullYear();
+    return { day, month, year };
+  };
+
+  const formatSuggestionDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
   };
 
   const formatTime = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    };
-    return new Date(dateString).toLocaleTimeString('id-ID', options);
+    return new Date(dateString).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const formattedStartDate = formatDate(eventData.startDate);
-  const formattedEndDate = formatDate(eventData.endDate);
-  const formattedStartTime = formatTime(eventData.startDate);
-  const formattedEndTime = formatTime(eventData.endDate);
-
   return (
-    <div className="container mx-auto p-0 max-w-6xl font-sans my-5 shadow-xl rounded-xl overflow-hidden bg-white">
-      {/* Bagian Banner Event */}
-      {eventData.banner && (
-        <img
-          src={eventData.banner}
-          alt={eventData.name}
-          className="w-full max-h-[450px] object-cover rounded-t-xl"
-        />
-      )}
-
-      <div className="p-8">
-        {/* Bagian Detail Event */}
-        <h1 className="text-4xl font-extrabold mb-4 text-gray-900 border-b-2 border-gray-100 pb-3">
-          {eventData.name}
-        </h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-8 mb-8 text-gray-700 text-lg">
-          <p>
-            <strong>Organizer:</strong> {eventData.organizer || 'N/A'}
-          </p>
-          <p>
-            <strong>Lokasi:</strong> {eventData.location}
-          </p>
-          <p>
-            <strong>Tanggal:</strong> {formattedStartDate} - {formattedEndDate}
-          </p>
-          <p>
-            <strong>Waktu:</strong> {formattedStartTime} - {formattedEndTime}{' '}
-            WIB
-          </p>
-          <p>
-            <strong>Kategori:</strong> {getCategoryLabel(eventData.category)}
-          </p>
-          <p>
-            <strong>Status:</strong>{' '}
-            <span
-              className={`font-bold ${eventData.eventStatus === 'PUBLISHED' ? 'text-green-600' : eventData.eventStatus === 'CANCELLED' ? 'text-red-600' : 'text-gray-500'}`}
-            >
-              {getStatusLabel(eventData.eventStatus)}
-            </span>
-          </p>
-        </div>
-
-        {/* Deskripsi Event */}
-        <h2 className="text-3xl font-semibold mt-10 mb-4 text-gray-800 border-b border-gray-200 pb-2">
-          Deskripsi Event
-        </h2>
-        <div
-          className="prose max-w-none text-gray-700 leading-relaxed"
-          dangerouslySetInnerHTML={{
-            __html:
-              eventData.description ||
-              '<p>Tidak ada deskripsi untuk event ini.</p>'
-          }}
-        />
-
-        {/* Syarat dan Ketentuan */}
-        <h2 className="text-3xl font-semibold mt-10 mb-4 text-gray-800 border-b border-gray-200 pb-2">
-          Syarat dan Ketentuan
-        </h2>
-        <div
-          className="prose max-w-none text-gray-700 leading-relaxed"
-          dangerouslySetInnerHTML={{
-            __html:
-              eventData.syaratKetentuan ||
-              '<p>Tidak ada syarat dan ketentuan khusus.</p>'
-          }}
-        />
-
-        {/* Menu Checkout Event - Pilihan Tiket dalam Card */}
-        <hr className="my-12 border-t-2 border-dashed border-gray-300" />
-        <h2 className="text-3xl font-semibold mb-6 text-gray-800">
-          Pesan Tiket
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-          {eventData.ticketTypes.map((ticket) => (
-            <div
-              key={ticket.id}
-              onClick={() => handleTicketSelect(ticket)}
-              className={`
-                                relative p-6 rounded-lg shadow-md border-2 transition-all duration-300 ease-in-out cursor-pointer
-                                ${
-                                  selectedTicketType?.id === ticket.id
-                                    ? 'border-blue-500 bg-blue-50 shadow-lg'
-                                    : 'border-transparent bg-gray-50 hover:border-gray-300 hover:shadow-lg'
-                                }
-                                ${
-                                  ticket.stock <= 0
-                                    ? 'opacity-60 cursor-not-allowed bg-gray-200 filter grayscale'
-                                    : ''
-                                }
-                            `}
-            >
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                {ticket.name}
-              </h3>
-              <p className="text-xl font-semibold text-blue-600 mb-2">
-                Rp{parseFloat(ticket.price).toLocaleString('id-ID')}
-              </p>
-              <p className="text-gray-600 text-base mb-3">
-                {ticket.description}
-              </p>
-              <p className="text-gray-500 text-sm italic">
-                {ticket.stock > 0 ? `${ticket.stock} tersedia` : 'Habis'}
-              </p>
-              {ticket.stock <= 0 && (
-                <div className="absolute inset-0 flex items-center justify-center bg-red-600 bg-opacity-70 text-white text-3xl font-bold rotate-[-25deg] pointer-events-none rounded-lg">
-                  SOLD OUT
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {selectedTicketType && selectedTicketType.stock > 0 && (
-          <div className="bg-gray-100 p-8 rounded-lg shadow-inner flex flex-col items-center gap-6">
-            <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-8 w-full justify-center">
-              {/* Quantity Control */}
-              <div className="flex items-center space-x-4">
-                <label
-                  htmlFor="quantity"
-                  className="font-bold text-lg text-gray-700"
-                >
-                  Jumlah Tiket:
-                </label>
-                <input
-                  type="number"
-                  id="quantity"
-                  min="1"
-                  max={selectedTicketType.stock}
-                  value={quantity}
-                  onChange={handleQuantityChange}
-                  className="w-24 p-3 rounded-lg border border-gray-300 text-lg text-center bg-white focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              {/* Voucher Selection */}
-              {validVouchers.length > 0 && (
-                <div className="flex items-center space-x-4">
-                  <label
-                    htmlFor="voucher"
-                    className="font-bold text-lg text-gray-700"
-                  >
-                    Pilih Voucher:
-                  </label>
-                  <select
-                    id="voucher"
-                    onChange={handleVoucherChange}
-                    value={selectedVoucher?.discount || ''}
-                    className="p-3 rounded-lg border border-gray-300 text-lg bg-white focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Tidak Ada Voucher</option>
-                    {validVouchers.map((voucher, index) => (
-                      <option key={index} value={voucher.discount}>
-                        Diskon {(voucher.discount * 100).toFixed(0)}%
-                        {/* Anda bisa menambahkan tanggal berlaku jika mau */}
-                        {` (Berlaku hingga ${new Date(voucher.endDate).toLocaleDateString('id-ID')})`}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-
-            {/* Harga Sebelum Diskon (Opsional, untuk transparansi) */}
-            {selectedVoucher && basePrice > totalPrice && (
-              <p className="text-lg text-gray-600 line-through">
-                Harga Awal: Rp{basePrice.toLocaleString('id-ID')}
-              </p>
-            )}
-
-            {/* Total Harga */}
-            <p className="text-3xl font-bold text-gray-800 mt-2">
-              Total Harga:{' '}
-              <span className="text-green-600">
-                Rp{totalPrice.toLocaleString('id-ID')}
-              </span>
-            </p>
-            <button
-              onClick={handleCheckoutClick}
-              disabled={quantity <= 0 || selectedTicketType.stock <= 0}
-              className="px-8 py-4 bg-blue-600 text-white rounded-lg font-bold text-xl hover:bg-blue-700 transition duration-300 ease-in-out disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-80 transform hover:-translate-y-1"
-            >
-              Pesan Sekarang
-            </button>
+    <div className="bg-gray-50 font-sans">
+      <div className="max-w-7xl mx-auto py-8 px-4">
+        {/* Banner Section */}
+        <div className="relative rounded-2xl overflow-hidden shadow-2xl mb-8">
+          <img src={eventData.banner} alt={eventData.name} className="w-full h-72 md:h-96 object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent"></div>
+          <div className="absolute bottom-0 left-0 p-6 md:p-10">
+            <h1 className="text-white text-4xl md:text-6xl font-bold tracking-tight">{eventData.name}</h1>
+            <p className="text-pink-400 text-xl mt-2 font-medium">{eventData.category}</p>
           </div>
-        )}
-        {selectedTicketType && selectedTicketType.stock <= 0 && (
-          <p className="text-center text-red-600 text-lg mt-5 p-4 bg-red-50 rounded-lg border border-red-200">
-            Tiket yang Anda pilih sudah habis.
-          </p>
-        )}
+        </div>
+
+        <div className="bg-white p-6 md:p-8 rounded-2xl shadow-xl">
+          {/* Ticket Selection Section */}
+          <div className="space-y-4 my-8">
+            {eventData.ticketTypes.map((ticket) => {
+              const { day, month, year } = formatDate(eventData.startDate);
+              const isSoldOut = ticket.stock <= 0;
+              return (
+                <div key={ticket.id} className="flex flex-col sm:flex-row items-center bg-white border border-gray-200 rounded-2xl p-4 shadow-md transition-all hover:shadow-lg hover:border-pink-300">
+                  <div className={`text-center p-4 rounded-xl mr-0 sm:mr-6 mb-4 sm:mb-0 ${isSoldOut ? 'bg-gray-200 text-gray-500' : 'bg-blue-600 text-white'}`}>
+                    <p className="text-4xl font-bold">{day}</p>
+                    <p className="text-lg">{month}</p>
+                    <p className="text-sm">{year}</p>
+                  </div>
+                  <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-4 items-center text-center sm:text-left w-full">
+                    <div>
+                      <p className="font-bold text-xl text-gray-800">{ticket.name}</p>
+                      <p className={`text-md font-semibold ${isSoldOut ? 'text-red-600' : 'text-green-600'}`}>{isSoldOut ? 'Sold Out' : 'Available'}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Price</p>
+                      <p className="font-semibold text-lg">{formatPrice(ticket.price)}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Time</p>
+                      <p className="font-semibold text-lg">{formatTime(eventData.startDate)}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Location</p>
+                      <p className="font-semibold text-lg">{eventData.location}</p>
+                    </div>
+                  </div>
+                  <div className="ml-0 sm:ml-6 mt-4 sm:mt-0">
+                    <button
+                      onClick={() => handleViewTicketClick(ticket)}
+                      disabled={isSoldOut}
+                      className={`w-full sm:w-auto px-8 py-3 rounded-lg font-semibold text-white transition-transform transform hover:scale-105 ${isSoldOut ? 'bg-gray-400 cursor-not-allowed' : 'bg-pink-500 hover:bg-pink-600'}`}
+                    >
+                      View Ticket
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Address & Map Section */}
+          <div className="my-12">
+            <div className="flex items-center gap-3 text-gray-800 mb-4">
+              <MapPin className="w-6 h-6 text-pink-500" />
+              <p className="text-lg"><strong>Address:</strong> {eventData.location}</p>
+            </div>
+            <div className="rounded-2xl overflow-hidden border-2 border-gray-200">
+              <img src="/images/banner/1.png" alt="Map" className="w-full h-72 object-cover" />
+            </div>
+          </div>
+
+          {/* Top Reviews Section */}
+          <div className="my-12">
+            <h2 className="text-3xl font-bold mb-6 text-gray-800">Top reviews on this concert</h2>
+
+            {/* Review Submission Form */}
+            <div className="bg-gray-100 p-6 rounded-2xl mb-8 border border-gray-200">
+              <h3 className="font-bold text-xl mb-4 text-gray-700">Leave a Review</h3>
+              <div className="flex items-center mb-4">
+                <span className="mr-4 text-lg">Your Rating:</span>
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-8 h-8 cursor-pointer ${i < newReviewRating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                      onClick={() => setNewReviewRating(i + 1)}
+                    />
+                  ))}
+                </div>
+              </div>
+              <textarea
+                className="w-full p-4 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-400 focus:border-transparent transition"
+                rows={4}
+                placeholder="Share your experience..."
+                value={newReviewComment}
+                onChange={(e) => setNewReviewComment(e.target.value)}
+              ></textarea>
+              <button
+                onClick={handleReviewSubmit}
+                disabled={isSubmittingReview}
+                className="mt-4 px-8 py-3 bg-pink-500 text-white font-semibold rounded-lg hover:bg-pink-600 disabled:bg-gray-400 transition-all"
+              >
+                {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
+              </button>
+            </div>
+
+            <div className="space-y-8">
+              {loading.reviews && <p>Loading reviews...</p>}
+              {error.reviews && <p className="text-red-500">{error.reviews}</p>}
+              {!loading.reviews && !error.reviews && reviews.length === 0 && (
+                <p className="text-gray-500">No reviews for this event yet.</p>
+              )}
+              {reviews.map((review : any) => (
+                <div key={review.id} className="flex gap-5">
+                  <img src={review.user.avatar || '/images/dami1.png'} alt={review.user.name} className="w-16 h-16 rounded-full object-cover shadow-md" />
+                  <div className="flex-1">
+                    <p className="font-bold text-lg">{review.user.name}</p>
+                    <div className="flex items-center my-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className={`w-5 h-5 ${i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
+                      ))}
+                    </div>
+                    <p className="text-gray-600 leading-relaxed">{review.comment}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Suggestions Section */}
+          <div>
+            <h2 className="text-3xl font-bold mb-6 text-gray-800">Suggestions for you</h2>
+            {loading.suggestions && <p>Loading suggestions...</p>}
+            {error.suggestions && <p className="text-red-500">{error.suggestions}</p>}
+            {!loading.suggestions && !error.suggestions && suggestions.length === 0 && (
+              <p className="text-gray-500">No other events to suggest.</p>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              {suggestions.map(suggestion => (
+                <Link href={`/adicara/${suggestion.slug}`} key={suggestion.id}>
+                  <div className="rounded-2xl overflow-hidden shadow-lg border border-gray-200 hover:shadow-2xl transition-shadow cursor-pointer group h-full flex flex-col">
+                    <img src={suggestion.banner} alt={suggestion.name} className="w-full h-56 object-cover transform group-hover:scale-105 transition-transform" />
+                    <div className="p-5 text-center bg-white flex-grow">
+                      <p className="font-bold text-lg">{suggestion.name}</p>
+                      <p className="text-md text-gray-600">{suggestion.location}</p>
+                      <p className="text-sm text-gray-500 mt-1">{formatSuggestionDate(suggestion.startDate)}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Modal Konfirmasi Checkout */}
-      {showCheckoutModal && selectedTicketType && (
+      {/* Checkout Modal */}
+      {showCheckoutModal && selectedTicket && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-          <div className="bg-white p-10 rounded-xl max-w-lg w-full text-center shadow-2xl animate-scale-in">
-            <h3 className="text-3xl font-bold mb-5 text-gray-900">
-              Konfirmasi Pesanan Anda
-            </h3>
-            <p className="mb-3 text-lg text-gray-700">Anda akan memesan:</p>
-            <p className="text-4xl font-extrabold text-blue-700 mb-4">
-              {quantity}x{' '}
-              <span className="text-gray-800">{selectedTicketType.name}</span>
-            </p>
-            {selectedVoucher && (
-              <p className="text-lg text-green-600 mb-2">
-                Dengan Voucher:{' '}
-                <span className="font-bold">
-                  {(selectedVoucher.discount * 100).toFixed(0)}% Diskon
-                </span>
-              </p>
-            )}
-            <p className="mb-6 text-lg text-gray-700">
-              untuk event{' '}
-              <strong className="text-blue-600">{eventData.name}</strong>
-            </p>
-            {selectedVoucher && basePrice > totalPrice && (
-              <p className="text-xl text-gray-500 line-through mb-2">
-                Harga Awal: Rp{basePrice.toLocaleString('id-ID')}
-              </p>
-            )}
-            <p className="text-5xl font-bold text-green-700 mt-5 mb-8">
-              Total: Rp{totalPrice.toLocaleString('id-ID')}
-            </p>
-            <div className="flex flex-col sm:flex-row justify-around gap-4">
-              <button
-                onClick={handleConfirmCheckout}
-                className="px-6 py-3 bg-green-600 text-white rounded-lg font-bold text-lg hover:bg-green-700 transition duration-300 ease-in-out flex-1"
-              >
-                Konfirmasi & Lanjutkan Pembayaran
-              </button>
-              <button
-                onClick={() => setShowCheckoutModal(false)}
-                className="px-6 py-3 bg-red-600 text-white rounded-lg font-bold text-lg hover:bg-red-700 transition duration-300 ease-in-out flex-1"
-              >
-                Batal
-              </button>
+          <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-lg w-full transform transition-all animate-scale-in">
+            <h2 className="text-3xl font-bold mb-5 text-gray-800">Confirm Your Ticket</h2>
+            <div className="space-y-3 text-lg">
+              <p><strong>Event:</strong> {eventData.name}</p>
+              <p><strong>Ticket:</strong> {selectedTicket.name}</p>
+              <p className="font-bold text-xl"><strong>Price:</strong> {formatPrice(selectedTicket.price)}</p>
+            </div>
+            <div className="flex justify-end gap-4 mt-8">
+              <button onClick={() => setShowCheckoutModal(false)} className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold">Cancel</button>
+              <button onClick={handleConfirmCheckout} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">Confirm & Checkout</button>
             </div>
           </div>
         </div>
       )}
-      {/* Animasi untuk modal - tambahkan ke globals.css */}
-      <style jsx global>{`
-        @keyframes scale-in {
-          from {
-            opacity: 0;
-            transform: scale(0.9);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-        .animate-scale-in {
-          animation: scale-in 0.3s ease-out forwards;
-        }
-      `}</style>
     </div>
   );
 };

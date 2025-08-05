@@ -6,8 +6,8 @@ import { ShowFooter } from '@/components/Footer';
 
 import LoadingAnimation from '@/components/Loading';
 import { ShowNavbar } from '@/components/navbar';
-import AuthLogin from '@/middleware/Auth';
 import KeepLoginProvider from '@/middleware/KeepLogin';
+
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -27,16 +27,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <StoreProvider>
-        <KeepLoginProvider />
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          <ShowNavbar />
-          <LoadingAnimation />
-          {children}
-          <Toaster richColors position="top-right" />
-          <ShowFooter />
-        </body>
+          <KeepLoginProvider />
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          >
+            <ShowNavbar />
+            <LoadingAnimation />
+            {children}
+            <Toaster richColors position="top-right" />
+            <ShowFooter />
+          </body>
       </StoreProvider>
     </html>
   );

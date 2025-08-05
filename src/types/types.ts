@@ -58,6 +58,24 @@ export interface EventDetail {
     vouchers?: Voucher[];
 }
 
+export interface Review {
+    id: number;
+    user: {
+        name: string;
+        avatar?: string;
+    };
+    rating: number;
+    comment: string;
+}
+
+export interface Suggestion {
+    id: number;
+    slug: string;
+    name: string;
+    banner: string;
+    location: string;
+    startDate: string;
+}
 
 export const categoryOptions: CategoryOption[] = [
     { value: 'CONFERENCE', label: 'Conference' },
@@ -80,3 +98,4 @@ export const statusOptions: StatusOption[] = [
     { value: 'DRAFT', label: 'Draft' },
     { value: 'CANCELLED', label: 'Cancelled' }
 ];
+
