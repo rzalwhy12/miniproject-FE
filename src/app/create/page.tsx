@@ -2,17 +2,16 @@
 
 import React, { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  EventImageUpload,
-  EventBasicInfo,
-  TicketSection,
-  EventDescription,
-  EventFormActions,
-  BackgroundElements
-} from '@/app/create/components';
+
 import VoucherSection from '@/app/create/components/VoucherSection';
 import AuthLogin from '@/middleware/Auth';
 import AuthOrganizer from '@/middleware/AuthOrganizer';
+import BackgroundElements from './components/BackgroundElements';
+import EventImageUpload from './components/EventImageUpload';
+import EventBasicInfo from './components/EventBasicInfo';
+import TicketSection from './components/TicketSection';
+import EventDescription from './components/EventDescription';
+import EventFormActions from './components/EventFormActions';
 
 const CreateEventPage = () => {
   return (

@@ -5,7 +5,7 @@ import { Toaster } from 'sonner';
 import { ShowFooter } from '@/components/Footer';
 
 import LoadingAnimation from '@/components/Loading';
-import { ShowNavbar } from '@/components/Navbar';
+import { ShowNavbar } from '@/components/navbar';
 import AuthLogin from '@/middleware/Auth';
 import KeepLoginProvider from '@/middleware/KeepLogin';
 

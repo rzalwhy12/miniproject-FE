@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { showError } from '@/helper/interceptor';
 import { apiCall } from '@/helper/apiCall';
+import { forwardRef } from 'react';
+import { toast } from 'sonner';
+import { Image } from 'lucide-react';
 
 interface IDataUser {
   name: string;
@@ -20,16 +23,28 @@ interface IDataUser {
   referralCode: string;
   isVerified: boolean;
   couponDiscount: number;
+  expireCoupon: string;
   totalPoint: number;
+  expirePoint: string;
 }
+
+const formatDate = (dateStr?: string) => {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+};
 
 const EditProfileForm = () => {
   const [form, setForm] = useState<IDataUser | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
 
-  // Refs
   const nameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const usernameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
   const birthRef = useRef<HTMLInputElement>(null);
   const genderRef = useRef<HTMLSelectElement>(null);
@@ -52,6 +67,7 @@ const EditProfileForm = () => {
       showError(error);
     }
   };
+
   useEffect(() => {
     getProfile();
   }, []);
@@ -59,6 +75,8 @@ const EditProfileForm = () => {
   const handleSubmit = async () => {
     const updatedData = {
       name: nameRef.current?.value || '',
+      email: emailRef.current?.value || '',
+      username: usernameRef.current?.value || '',
       noTlp: phoneRef.current?.value || '',
       birthDate: birthRef.current?.value
         ? new Date(birthRef.current.value).toISOString()
@@ -72,17 +90,15 @@ const EditProfileForm = () => {
     const token = localStorage.getItem('token');
 
     try {
-      // 👉 API pertama: update data JSON (bukan FormData)
       const res = await apiCall.patch('account/update-data', updatedData, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
 
-      // 👉 API kedua: upload foto (gunakan FormData)
       if (profileImageFile) {
         const imageForm = new FormData();
-        imageForm.append('profileImage', profileImageFile); // field name harus sesuai di backend
+        imageForm.append('profileImage', profileImageFile);
 
         await apiCall.patch('account/update-profile-image', imageForm, {
           headers: {
@@ -91,7 +107,7 @@ const EditProfileForm = () => {
         });
       }
 
-      toast.success(res.data.result.message);
+      toast.success(res.data.result.message || 'Berhasil memperbarui profil');
       getProfile();
     } catch (error) {
       showError(error);
@@ -128,18 +144,36 @@ const EditProfileForm = () => {
               className="hidden"
               onChange={handleImageChange}
             />
-            <span className="text-white text-xs">📷</span>
+            <span className="text-white text-xs">
+              <Image />
+            </span>
           </label>
         </div>
       </div>
 
       {/* Fields */}
       <div className="space-y-5">
-        <ReadOnlyField label="Email" value={form.email} />
-        <ReadOnlyField label="Username" value={form.username} />
+        <InputBlock
+          label="Email"
+          name="email"
+          defaultValue={form.email}
+          ref={emailRef}
+        />
+        <InputBlock
+          label="Username"
+          name="username"
+          defaultValue={form.username}
+          ref={usernameRef}
+        />
         <ReadOnlyField label="Referral Code" value={form.referralCode} />
-        <ReadOnlyField label="Point" value={form.totalPoint.toLocaleString()} />
-        <ReadOnlyField label="Kupon" value={`${form.couponDiscount || 0}%`} />
+        <ReadOnlyField
+          label="Point"
+          value={`${form.totalPoint.toLocaleString()} (Exp: ${formatDate(form.expirePoint)})`}
+        />
+        <ReadOnlyField
+          label="Kupon"
+          value={`${form.couponDiscount || 0}% (Exp: ${formatDate(form.expireCoupon)})`}
+        />
 
         <InputBlock
           label="Nama Lengkap"
@@ -157,7 +191,7 @@ const EditProfileForm = () => {
           label="Tanggal Lahir"
           name="birthDate"
           type="date"
-          defaultValue={form.birthDate}
+          defaultValue={new Date(form.birthDate).toISOString().split('T')[0]}
           ref={birthRef}
         />
 
@@ -223,7 +257,6 @@ const EditProfileForm = () => {
   );
 };
 
-// ReadOnly
 const ReadOnlyField = ({
   label,
   value
@@ -241,9 +274,6 @@ const ReadOnlyField = ({
   </div>
 );
 
-// Input Block dengan forwardRef
-import { forwardRef } from 'react';
-import { toast } from 'sonner';
 const InputBlock = forwardRef<
   HTMLInputElement,
   {

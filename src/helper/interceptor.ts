@@ -14,7 +14,10 @@ apiCall.interceptors.response.use(
 
 export const showError = (error: unknown) => {
   if (error instanceof AppError) {
-    if (error.message === 'Token expired') {
+    if (
+      error.message === 'Token expired' ||
+      error.message === 'jwt malformed'
+    ) {
       return;
     }
     toast.error(error.message);

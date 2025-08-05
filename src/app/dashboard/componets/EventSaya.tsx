@@ -1,7 +1,15 @@
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Calendar, MapPin, Users, Star, TrendingUp, Clock, Plus } from 'lucide-react';
+import {
+  Calendar,
+  MapPin,
+  Users,
+  Star,
+  TrendingUp,
+  Clock,
+  Plus
+} from 'lucide-react';
 
 const dummyEvents = [
   {
@@ -42,10 +50,14 @@ const EventSaya = () => {
 
   const getTabIcon = (tabName: string) => {
     switch (tabName) {
-      case 'aktif': return <TrendingUp className="w-5 h-5" />;
-      case 'draft': return <Clock className="w-5 h-5" />;
-      case 'lalu': return <Star className="w-5 h-5" />;
-      default: return null;
+      case 'aktif':
+        return <TrendingUp className="w-5 h-5" />;
+      case 'draft':
+        return <Clock className="w-5 h-5" />;
+      case 'lalu':
+        return <Star className="w-5 h-5" />;
+      default:
+        return null;
     }
   };
 
@@ -61,9 +73,10 @@ const EventSaya = () => {
           <button
             key={key}
             className={`group flex items-center gap-3 px-6 py-4 rounded-xl cursor-pointer transition-all duration-300 text-base font-medium tracking-wide relative overflow-hidden flex-1
-              ${tab === key 
-                ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg transform scale-105' 
-                : 'text-white hover:bg-white/10 hover:shadow-md'
+              ${
+                tab === key
+                  ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg transform scale-105'
+                  : 'text-white hover:bg-white/10 hover:shadow-md'
               }`}
             onClick={() => setTab(key as 'aktif' | 'draft' | 'lalu')}
           >
@@ -71,19 +84,21 @@ const EventSaya = () => {
             {tab === key && (
               <div className="absolute inset-0 bg-gradient-to-r from-pink-400/20 to-purple-400/20 rounded-xl"></div>
             )}
-            
+
             <div className="relative z-10 flex items-center gap-3">
               {getTabIcon(key)}
               <span>{label}</span>
-              <div className={`px-2 py-1 rounded-full text-xs font-bold ${
-                tab === key 
-                  ? 'bg-white/20 text-white' 
-                  : 'bg-purple-500/30 text-purple-100'
-              }`}>
+              <div
+                className={`px-2 py-1 rounded-full text-xs font-bold ${
+                  tab === key
+                    ? 'bg-white/20 text-white'
+                    : 'bg-purple-500/30 text-purple-100'
+                }`}
+              >
                 {count}
               </div>
             </div>
-            
+
             {/* Active indicator */}
             {tab === key && (
               <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-pink-300 to-purple-300 rounded-full"></div>
@@ -108,17 +123,23 @@ const EventSaya = () => {
             >
               {/* Background gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              
+
               {/* Status badge */}
               <div className="absolute top-4 right-4 z-20">
-                <div className={`px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm border ${
-                  event.status === 'active' 
-                    ? 'bg-green-500/20 text-green-300 border-green-400/30' 
+                <div
+                  className={`px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm border ${
+                    event.status === 'active'
+                      ? 'bg-green-500/20 text-green-300 border-green-400/30'
+                      : event.status === 'draft'
+                        ? 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30'
+                        : 'bg-blue-500/20 text-blue-300 border-blue-400/30'
+                  }`}
+                >
+                  {event.status === 'active'
+                    ? 'Aktif'
                     : event.status === 'draft'
-                    ? 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30'
-                    : 'bg-blue-500/20 text-blue-300 border-blue-400/30'
-                }`}>
-                  {event.status === 'active' ? 'Aktif' : event.status === 'draft' ? 'Draft' : 'Selesai'}
+                      ? 'Draft'
+                      : 'Selesai'}
                 </div>
               </div>
 
@@ -130,12 +151,14 @@ const EventSaya = () => {
                   className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-                
+
                 {/* Rating for completed events */}
                 {event.status === 'completed' && (
                   <div className="absolute bottom-4 left-4 flex items-center gap-1 bg-black/30 backdrop-blur-sm px-2 py-1 rounded-full">
                     <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="text-white text-sm font-medium">{event.rating}</span>
+                    <span className="text-white text-sm font-medium">
+                      {event.rating}
+                    </span>
                   </div>
                 )}
               </div>
@@ -145,21 +168,23 @@ const EventSaya = () => {
                 <h3 className="text-xl font-bold text-white group-hover:gradient-text transition-colors duration-300">
                   {event.title}
                 </h3>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-purple-200">
                     <Calendar className="w-4 h-4" />
                     <p className="text-sm font-medium">{event.date}</p>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 text-purple-200">
                     <MapPin className="w-4 h-4" />
                     <p className="text-sm font-medium">{event.location}</p>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 text-purple-200">
                     <Users className="w-4 h-4" />
-                    <p className="text-sm font-medium">{event.attendees} peserta</p>
+                    <p className="text-sm font-medium">
+                      {event.attendees} peserta
+                    </p>
                   </div>
                 </div>
 
@@ -186,7 +211,7 @@ const EventSaya = () => {
         >
           {/* Background glow effect */}
           <div className="absolute inset-0 bg-gradient-to-r from-pink-400/20 to-purple-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          
+
           {/* Button content */}
           <div className="relative z-10 flex items-center gap-3">
             <div className="p-2 bg-white/20 rounded-xl group-hover:bg-white/30 transition-all duration-300">
@@ -194,9 +219,12 @@ const EventSaya = () => {
             </div>
             <span className="tracking-wide">Buat Event Baru</span>
           </div>
-          
+
           {/* Animated border */}
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-pink-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ padding: '2px' }}>
+          <div
+            className="absolute inset-0 rounded-2xl bg-gradient-to-r from-pink-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            style={{ padding: '2px' }}
+          >
             <div className="w-full h-full bg-gradient-to-r from-pink-500 to-purple-500 rounded-2xl"></div>
           </div>
         </button>

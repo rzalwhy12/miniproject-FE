@@ -12,7 +12,6 @@ const AuthOrganizer = () => {
   useEffect(() => {
     // Jangan lakukan apa pun sampai proses pengecekan selesai
     if (!checking && role && role !== 'ORGANIZER') {
-      toast.success(role);
       router.replace('/');
     }
   }, [role, checking]);
