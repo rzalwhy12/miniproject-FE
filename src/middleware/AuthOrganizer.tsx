@@ -10,7 +10,6 @@ const AuthOrganizer = () => {
   const { role, checking } = useAppSelector((state) => state.account);
 
   useEffect(() => {
-    // Jangan lakukan apa pun sampai proses pengecekan selesai
     if (!checking && role && role !== 'ORGANIZER') {
       router.replace('/');
     }

@@ -1,13 +1,13 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { apiCall } from '@/helper/apiCall';
 import { showError } from '@/helper/interceptor';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, AlertTriangle, CheckCircle } from 'lucide-react';
 
 const Settings = () => {
   const oldPasswordRef = useRef<HTMLInputElement>(null);
@@ -19,6 +19,52 @@ const Settings = () => {
   const [showOld, setShowOld] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  const [isVerified, setIsVerified] = useState();
+  const [email, setEmail] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await apiCall.get('/account/get-data', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const user = res.data.result.data;
+        setIsVerified(user.isVerified);
+        setEmail(user.email);
+      } catch (error) {
+        showError(error);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  const resendVerificationEmail = async () => {
+    try {
+      setSendingEmail(true);
+      const token = localStorage.getItem('token');
+
+      const res = await apiCall.post(
+        '/account/verify-email',
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      toast.success(
+        res.data.result.message || 'Email verifikasi telah dikirim!'
+      );
+    } catch (error) {
+      showError(error);
+    } finally {
+      setSendingEmail(false);
+    }
+  };
 
   const onBtChangePassword = async () => {
     const oldPassword = oldPasswordRef.current?.value || '';
@@ -40,7 +86,7 @@ const Settings = () => {
       const token = localStorage.getItem('token');
 
       const res = await apiCall.patch(
-        'account/update-password',
+        '/account/update-password',
         {
           oldPassword,
           newPassword
@@ -94,6 +140,33 @@ const Settings = () => {
 
   return (
     <div className="max-w-xl mx-auto p-6 bg-white/10 border border-white/20 rounded-2xl shadow-xl mt-10 backdrop-blur">
+      {!isVerified ? (
+        <div className="flex items-center justify-between bg-yellow-100/10 border border-yellow-300/30 text-yellow-200 px-4 py-3 rounded-xl mb-6">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={18} />
+            <p className="text-sm">
+              Email <span className="font-medium">{email}</span> belum
+              terverifikasi.
+            </p>
+          </div>
+          <button
+            onClick={resendVerificationEmail}
+            disabled={sendingEmail}
+            className="bg-yellow-400/20 hover:bg-yellow-400/30 text-yellow-200 text-sm font-medium px-3 py-1.5 rounded-lg border border-yellow-300/30"
+          >
+            {sendingEmail ? 'Mengirim...' : 'Verifikasi Email'}
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 bg-green-100/10 border border-green-300/30 text-green-200 px-4 py-3 rounded-xl mb-6">
+          <CheckCircle size={18} />
+          <p className="text-sm">
+            Email kamu (<span className="font-medium">{email}</span>) sudah
+            terverifikasi
+          </p>
+        </div>
+      )}
+
       <h2 className="text-xl font-bold text-white mb-6">Ubah Password</h2>
 
       <div className="space-y-4">
