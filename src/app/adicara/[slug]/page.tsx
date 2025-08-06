@@ -15,57 +15,36 @@ interface EventDetailPageProps {
 
 async function getEventData(slug: string): Promise<EventDetail | null> {
   try {
-    const dummyEventData: EventDetail = {
-      id: 196,
-      name: 'Lamine Yamal Fest',
-      slug: slug,
-      banner:
-        'https://res.cloudinary.com/dobmhsgob/image/upload/v1754234554/zszqxjuood6rcu9q20mz.webp',
-      description:
-        '<p>Ini adalah deskripsi acara <strong>Lamine Yamal Fest</strong> yang spektakuler. Akan ada banyak musisi terkenal dan pengalaman tak terlupakan!</p>',
-      syaratKetentuan:
-        '<h2>Syarat dan Ketentuan Lamine Yamal Fest</h2><p>1. Tiket yang sudah dibeli tidak dapat dikembalikan.</p><p>2. Wajib membawa identitas diri.</p><p>3. Dilarang membawa makanan/minum dari luar.</p><p>4. Jaga kebersihan dan ketertiban.</p>',
-      startDate: '2025-08-03T15:21:00.000Z',
-      endDate: '2025-08-03T15:21:00.000Z',
-      location: 'Surabaya',
-      organizer: 'User',
-      ticketTypes: [
-        {
-          id: 1,
-          name: 'Reguler',
-          price: '150000',
-          description: 'Tiket reguler',
-          stock: 100
-        },
-        {
-          id: 2,
-          name: 'VIP',
-          price: '350000',
-          description: 'Tiket VIP',
-          stock: 50
-        },
-        {
-          id: 3,
-          name: 'Early Bird',
-          price: '100000',
-          description: 'Tiket Early Bird',
-          stock: 20
-        }
-      ],
-      category: 'MUSIC',
-      eventStatus: 'PUBLISHED'
-    };
-    return dummyEventData;
+    // Fetch data from the backend API using the slug
+    const res = await fetch(`${process.env.NEXT_PUBLIC_URL_DATABASE}/event/${slug}`, {
+      cache: 'no-store', // Ensures we get fresh data on every request
+    });
+
+    if (!res.ok) {
+      console.error(`Failed to fetch event data for slug: ${slug}. Status: ${res.status}`);
+      // This will be caught by the !eventData check below and show the error message.
+      return null;
+    }
+
+    const responseData = await res.json();
+
+    // Data event bisa ada di field 'data' atau 'result' tergantung backend
+    if (responseData && (responseData.data || responseData.result)) {
+      const event = responseData.data || responseData.result;
+      return event;
+    } else {
+      console.error('Event data not found in the expected format in the response.');
+      return null;
+    }
   } catch (error) {
     console.error('Error fetching event details in Server Component:', error);
     return null;
   }
 }
 
-const EventDetailPage = async ({ params }: EventDetailPageProps) => {
-  const { slug } = params; // Akses params.slug secara langsung di Server Component adalah AMAN
-
-  const eventData = await getEventData(slug);
+const EventDetailPage = async (props: EventDetailPageProps) => {
+  const { params } = props;
+  const eventData = await getEventData(params.slug);
 
   if (!eventData) {
     // Anda bisa merender halaman 404 custom atau pesan error
@@ -76,8 +55,15 @@ const EventDetailPage = async ({ params }: EventDetailPageProps) => {
     );
   }
 
-  // Pass data yang diambil ke Client Component
-  return <EventDetailsClient eventData={eventData} />;
+  // Extract the actual event object if wrapped in a 'data' field
+  const rawEvent = (eventData && (eventData as any).data) ? (eventData as any).data : eventData;
+  // Ensure ticketTypes is always an array to prevent client-side errors
+  const safeEventData = {
+    ...rawEvent,
+    ticketTypes: Array.isArray(rawEvent.ticketTypes) ? rawEvent.ticketTypes : [],
+  };
+  // Pass the sanitized data to the Client Component
+  return <EventDetailsClient eventData={safeEventData} />;
 };
 
 export default EventDetailPage;

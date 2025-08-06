@@ -6,20 +6,21 @@ import { useAppDispatch, useAppSelector } from '@/lib/redux/hook';
 import { createEventForm } from '@/lib/redux/features/createEvenSlice';
 import { toast } from 'sonner';
 
-const EventImageUpload: React.FC = () => {
-  const dispatch = useAppDispatch();
-  const { image } = useAppSelector((state) => state.createEvent);
 
+interface EventImageUploadProps {
+  image: File | null;
+  setImage: (file: File | null) => void;
+}
+
+const EventImageUpload: React.FC<EventImageUploadProps> = ({ image, setImage }) => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (file.size > 10 * 1024 * 1024) {
-      toast.warning('file sieze');
+      toast.warning('file size');
       return;
     }
-
-    dispatch(createEventForm({ image: file }));
+    setImage(file);
   };
 
   return (
