@@ -19,13 +19,13 @@ export interface EventForm {
     vouchers?: Voucher[];
 }
 
-export interface Ticket { // Ini adalah tipe untuk Ticket di kolom 'ticketTypes'
-    id: number;
-    name: string;
-    price: string; // Sesuaikan dengan yang Anda berikan
-    description: string;
-    // Tambahan, asumsikan ada 'stock' untuk perhitungan
-    stock: number;
+export interface Ticket {
+  id: number;
+  name: string;
+  price: string;
+  quota: number;
+  descriptionTicket: string | null;
+  benefit: string | null;
 }
 
 export interface StatusOption {

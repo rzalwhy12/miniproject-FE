@@ -16,23 +16,30 @@ interface EventDetailsClientProps {
 
 const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) => {
   const router = useRouter();
-  // Ambil user id dari Redux: state.account.id (bukan userId)
-  const { isLogin, id } = useAppSelector((state) => state.account);
   const dispatch = useAppDispatch();
+  // Retrieve state from Redux, but initialize id from localStorage as a fallback
+  const { isLogin, id: reduxId } = useAppSelector((state) => state.account);
 
-  // Sync user from localStorage to Redux if not set
+
   useEffect(() => {
-    if ((!id || id === 0) && typeof window !== 'undefined') {
-      const userIdFromStorage = localStorage.getItem('userId');
-      const name = localStorage.getItem('name');
-      const role = localStorage.getItem('role');
-      if (userIdFromStorage && name && role) {
-        dispatch(userLogin({ id: Number(userIdFromStorage), name, role }));
+    // Get user ID from localStorage on component mount
+    const userIdFromStorage = localStorage.getItem('userId');
+    const storedId = userIdFromStorage ? Number(userIdFromStorage) : null;
+
+    if (storedId) {
+      // If there's an ID in storage, use it.
+      // If Redux doesn't have the user info, dispatch it.
+      if (!reduxId || reduxId === 0) {
+        const name = localStorage.getItem('name');
+        const role = localStorage.getItem('role');
+        if (name && role) {
+          dispatch(userLogin({ id: storedId, name, role }));
+        }
       }
+    } else {
+      // If no ID in storage, rely on what Redux gives (which might be 0 if not logged in)
     }
-  }, []);
-  const [showCheckoutModal, setShowCheckoutModal] = useState<boolean>(false);
-  const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
+  }, [reduxId, dispatch]);
 
   const [reviews, setReviews] = useState<Review[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -44,13 +51,11 @@ const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) =>
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   useEffect(() => {
+    if (!eventData.id) return;
     // Fetch Reviews
     apiCall.get(`/review/event/${eventData.id}`)
       .then(res => {
-        // Pastikan reviews selalu array
-        const arr = Array.isArray(res.data.result)
-          ? res.data.result
-          : res.data.result?.data || [];
+        const arr = Array.isArray(res.data.result) ? res.data.result : res.data.result?.data || [];
         setReviews(arr);
       })
       .catch(err => {
@@ -79,19 +84,46 @@ const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) =>
       });
   }, [eventData.id]);
 
+  const [qtySelector, setQtySelector] = useState<{ open: boolean; ticket: TicketType | null }>({ open: false, ticket: null });
+  const [selectedQty, setSelectedQty] = useState(1);
 
   const handleViewTicketClick = (ticket: TicketType) => {
-    if (ticket.stock > 0) {
-      setSelectedTicket(ticket);
-      setShowCheckoutModal(true);
+    console.log('View Ticket button clicked.');
+    console.log('Is user logged in?', isLogin);
+    if (!isLogin) {
+      toast.error('You must be logged in to purchase tickets.');
+      router.push('/sign-in');
+      return;
+    }
+    if (Number(ticket.quota) > 0) {
+      console.log('Opening ticket quantity modal...');
+      setQtySelector({ open: true, ticket });
+      setSelectedQty(1);
+    } else {
+      console.log('Ticket is sold out.');
     }
   };
 
-  const handleConfirmCheckout = () => {
-    if (!selectedTicket) return;
-    // Redirect to a transaction page, passing necessary info
-    router.push(`/transaction/${eventData.id}?ticketTypeId=${selectedTicket.id}&qty=1`);
-    setShowCheckoutModal(false);
+  const handleQtyConfirm = async () => {
+    if (!qtySelector.ticket) {
+      toast.error("An error occurred. Please select a ticket.");
+      return;
+    }
+
+    const { ticket } = qtySelector;
+    // Store the selected ticket info in localStorage as orderItems array
+    const checkoutData = {
+      eventId: eventData.id,
+      createdAt: Date.now(), // Add timestamp for checkout expiration
+      orderItems: [
+        {
+          ticketTypeId: ticket.id,
+          quantity: selectedQty
+        }
+      ]
+    };
+    localStorage.setItem('checkoutData', JSON.stringify(checkoutData));
+    router.push(`/checkout/${eventData.slug}`);
   };
 
   const handleReviewSubmit = async () => {
@@ -114,27 +146,20 @@ const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) =>
         rating: Number(newReviewRating),
         comment: newReviewComment,
       };
-      // Debug: cek token di localStorage
       const token = localStorage.getItem('token');
       const res = await apiCall.post('/review/create', payload, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
-      toast.success(res.data.result.message)
-      
-      // Refetch reviews to show the new one
-      const reviewsRes = await apiCall.get(`/review/event/${eventData.id}`);
-      const arr = Array.isArray(reviewsRes.data.result)
-        ? reviewsRes.data.result
-        : reviewsRes.data.result?.data || [];
-      setReviews(arr);
-      
+      toast.success(res.data.result.message);
 
-      // Reset form
+      const reviewsRes = await apiCall.get(`/review/event/${eventData.id}`);
+      const arr = Array.isArray(reviewsRes.data.result) ? reviewsRes.data.result : reviewsRes.data.result?.data || [];
+      setReviews(arr);
+
       setNewReviewRating(0);
       setNewReviewComment('');
-
     } catch (error: any) {
       console.error('Failed to submit review:', error);
       alert(error?.message || 'There was an error submitting your review. Please try again.');
@@ -166,7 +191,6 @@ const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) =>
     return new Date(dateString).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
   };
 
-  // State for map search
   const [mapQuery, setMapQuery] = useState(eventData.location);
   const [searchInput, setSearchInput] = useState(eventData.location);
 
@@ -188,7 +212,7 @@ const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) =>
           <div className="space-y-4 my-8">
             {eventData.ticketTypes.map((ticket) => {
               const { day, month, year } = formatDate(eventData.startDate);
-              const isSoldOut = ticket.stock <= 0;
+              const isSoldOut = ticket.quota <= 0;
               return (
                 <div key={ticket.id} className="flex flex-col sm:flex-row items-center bg-white border border-gray-200 rounded-2xl p-4 shadow-md transition-all hover:shadow-lg hover:border-pink-300">
                   <div className={`text-center p-4 rounded-xl mr-0 sm:mr-6 mb-4 sm:mb-0 ${isSoldOut ? 'bg-gray-200 text-gray-500' : 'bg-blue-600 text-white'}`}>
@@ -228,6 +252,31 @@ const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) =>
             })}
           </div>
 
+          {/* Qty Selector Modal (outside ticket list loop) */}
+          {qtySelector.open && qtySelector.ticket && (
+            <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+              <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full">
+                <h2 className="text-2xl font-bold mb-4 text-gray-800">Select Quantity</h2>
+                <div className="flex items-center gap-4 mb-6">
+                  <span className="font-semibold">Qty:</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={qtySelector.ticket.quota}
+                    value={selectedQty}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedQty(Math.max(1, Math.min(qtySelector.ticket!.quota, Number(e.target.value))))}
+                    className="w-20 px-3 py-2 border rounded-lg text-center"
+                  />
+                  <span className="text-gray-500">/ {qtySelector.ticket.quota} available</span>
+                </div>
+                <div className="flex justify-end gap-3">
+                  <button onClick={() => setQtySelector({ open: false, ticket: null })} className="px-4 py-2 bg-gray-200 rounded-lg font-semibold">Cancel</button>
+                  <button onClick={handleQtyConfirm} className="px-4 py-2 bg-pink-500 text-white rounded-lg font-semibold hover:bg-pink-600">Confirm</button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Address & Map Section */}
           <div className="my-12">
             <div className="flex items-center gap-3 text-gray-800 mb-4">
@@ -250,7 +299,7 @@ const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) =>
                     name="search"
                     type="text"
                     value={searchInput}
-                    onChange={e => setSearchInput(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchInput(e.target.value)}
                     className="px-3 py-1 rounded-l-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-400"
                     placeholder="Search location..."
                   />
@@ -326,7 +375,7 @@ const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) =>
               {!loading.reviews && !error.reviews && reviews.length === 0 && (
                 <p className="text-gray-500">No reviews for this event yet.</p>
               )}
-              {reviews.map((review : any) => (
+              {reviews.map((review: any) => (
                 <div key={review.id} className="flex gap-5">
                   <img src={review.user.avatar || '/images/dami1.png'} alt={review.user.name} className="w-16 h-16 rounded-full object-cover shadow-md" />
                   <div className="flex-1">
@@ -366,26 +415,9 @@ const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) =>
               ))}
             </div>
           </div>
+
         </div>
       </div>
-
-      {/* Checkout Modal */}
-      {showCheckoutModal && selectedTicket && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-          <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-lg w-full transform transition-all animate-scale-in">
-            <h2 className="text-3xl font-bold mb-5 text-gray-800">Confirm Your Ticket</h2>
-            <div className="space-y-3 text-lg">
-              <p><strong>Event:</strong> {eventData.name}</p>
-              <p><strong>Ticket:</strong> {selectedTicket.name}</p>
-              <p className="font-bold text-xl"><strong>Price:</strong> {formatPrice(selectedTicket.price)}</p>
-            </div>
-            <div className="flex justify-end gap-4 mt-8">
-              <button onClick={() => setShowCheckoutModal(false)} className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold">Cancel</button>
-              <button onClick={handleConfirmCheckout} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold">Confirm & Checkout</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
