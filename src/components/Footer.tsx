@@ -12,7 +12,8 @@ export const ShowFooter = () => {
     pathname === '/sign-in' ||
     pathname === '/sign-up' ||
     pathname.startsWith('/verify') ||
-    pathname.startsWith('/dashboard')
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/reporting')
   )
     return null;
   return <Footer />;

@@ -51,6 +51,8 @@ const Order = () => {
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
   const [loadingId, setLoadingId] = useState<number | null>(null);
 
   const getOrderList = async () => {
@@ -80,7 +82,6 @@ const Order = () => {
         }
       );
       toast(`Transaksi berhasil di-${status === 'DONE' ? 'terima' : 'tolak'}`);
-
       await getOrderList();
     } catch (error) {
       showError(error);
@@ -95,7 +96,7 @@ const Order = () => {
 
   return (
     <>
-      <Card>
+      <Card className="bg-white/30">
         <CardContent className="p-6">
           <h2 className="text-xl font-semibold mb-4">Konfirmasi Order</h2>
 
@@ -120,7 +121,14 @@ const Order = () => {
               </TableHeader>
               <TableBody>
                 {orders.map((order, index) => (
-                  <TableRow key={order.id}>
+                  <TableRow
+                    key={order.id}
+                    className="cursor-pointer hover:bg-white/10 transition-colors"
+                    onClick={() => {
+                      setSelectedOrder(order);
+                      setIsDetailModalOpen(true);
+                    }}
+                  >
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{order.event.name}</TableCell>
                     <TableCell>{order.buyer.name}</TableCell>
@@ -140,7 +148,8 @@ const Order = () => {
                     <TableCell>
                       <div
                         className="w-20 h-12 overflow-hidden border rounded cursor-pointer hover:opacity-80"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation(); // cegah trigger modal detail
                           setSelectedImage(order.paymentProof);
                           setIsModalOpen(true);
                         }}
@@ -154,12 +163,15 @@ const Order = () => {
                         />
                       </div>
                     </TableCell>
-                    <TableCell className="text-center space-x-2">
+                    <TableCell className="text-center space-x-1">
                       <Button
                         variant="secondary"
                         size="sm"
                         disabled={loadingId === order.id}
-                        onClick={() => handleStatusUpdate(order.id, 'DONE')}
+                        onClick={(e) => {
+                          e.stopPropagation(); // cegah buka detail
+                          handleStatusUpdate(order.id, 'DONE');
+                        }}
                       >
                         {loadingId === order.id ? 'Processing...' : 'Accept'}
                       </Button>
@@ -167,7 +179,10 @@ const Order = () => {
                         variant="destructive"
                         size="sm"
                         disabled={loadingId === order.id}
-                        onClick={() => handleStatusUpdate(order.id, 'REJECTED')}
+                        onClick={(e) => {
+                          e.stopPropagation(); // cegah buka detail
+                          handleStatusUpdate(order.id, 'REJECTED');
+                        }}
                       >
                         {loadingId === order.id ? 'Processing...' : 'Reject'}
                       </Button>
@@ -180,23 +195,103 @@ const Order = () => {
         </CardContent>
       </Card>
 
-      {/* Modal Preview Bukti Transfer */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-2xl p-6 space-y-4">
-          <DialogTitle className="text-lg text-center">
-            Bukti Transfer
+      {/* Modal Detail Transaksi */}
+      <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+        <DialogContent className="max-w-xl p-6 space-y-6">
+          <DialogTitle className="text-lg text-center mb-2 font-semibold text-gray-800">
+            Detail Transaksi
           </DialogTitle>
 
-          {selectedImage && (
-            <div className="w-full max-h-[80vh] overflow-auto rounded border">
-              <Image
-                src={selectedImage}
-                alt="Bukti Transfer"
-                width={1000}
-                height={800}
-                className="w-full h-auto object-contain"
-              />
+          {selectedOrder && (
+            <div className="text-sm text-gray-700 space-y-3">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                <div>
+                  <span className="font-medium">Kode Transaksi:</span>
+                  <div className="text-muted-foreground">
+                    {selectedOrder.transactionCode}
+                  </div>
+                </div>
+                <div>
+                  <span className="font-medium">Status:</span>
+                  <div className="capitalize">
+                    {selectedOrder.status.toLowerCase()}
+                  </div>
+                </div>
+                <div>
+                  <span className="font-medium">Pembeli:</span>
+                  <div>{selectedOrder.buyer.name}</div>
+                </div>
+                <div>
+                  <span className="font-medium">Email:</span>
+                  <div className="text-muted-foreground">
+                    {selectedOrder.buyer.email}
+                  </div>
+                </div>
+                <div>
+                  <span className="font-medium">Event:</span>
+                  <div>{selectedOrder.event.name}</div>
+                </div>
+                <div>
+                  <span className="font-medium">Tanggal Order:</span>
+                  <div>
+                    {format(
+                      new Date(selectedOrder.orderDate),
+                      'dd MMM yyyy HH:mm'
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <span className="font-medium">Tiket:</span>
+                <ul className="list-disc list-inside text-muted-foreground">
+                  {selectedOrder.ticketList.map((ticket, i) => (
+                    <li key={i}>
+                      {ticket.ticketTypeName} x {ticket.quantity} — Rp{' '}
+                      {ticket.subTotal.toLocaleString('id-ID')}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <span className="font-medium">Total Harga:</span>
+                <div className="text-primary font-bold text-base">
+                  Rp {selectedOrder.totalPrice.toLocaleString('id-ID')}
+                </div>
+              </div>
+
+              <div>
+                <span className="font-medium">Bukti Pembayaran:</span>
+                <div className="mt-2 rounded border overflow-hidden w-[300px] h-[180px]">
+                  <Image
+                    src={selectedOrder.paymentProof}
+                    alt="Bukti Transfer"
+                    width={300}
+                    height={180}
+                    className="object-cover w-full h-full"
+                  />
+                </div>
+              </div>
             </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Bukti Transfer */}
+      <Dialog
+        open={!!selectedImage}
+        onOpenChange={() => setSelectedImage(null)}
+      >
+        <DialogContent className="max-w-md p-4">
+          {selectedImage && (
+            <Image
+              src={selectedImage}
+              alt="Bukti Transfer"
+              width={500}
+              height={300}
+              className="rounded w-full h-auto object-cover"
+            />
           )}
         </DialogContent>
       </Dialog>
