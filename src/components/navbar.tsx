@@ -27,7 +27,8 @@ export const ShowNavbar = () => {
     pathname === '/sign-in' ||
     pathname === '/sign-up' ||
     pathname.startsWith('/verify') ||
-    pathname === '/dashboard'
+    pathname === '/dashboard' ||
+    pathname.startsWith('/reporting')
   )
     return null;
 

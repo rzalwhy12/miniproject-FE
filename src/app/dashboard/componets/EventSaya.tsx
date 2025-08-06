@@ -59,7 +59,8 @@ export interface IReview {
 
 const EventSaya = () => {
   const [tab, setTab] = useState<'aktif' | 'draft' | 'lalu'>('aktif');
-  const [events, setEvents] = useState<any>([]);
+  const [events, setEvents] = useState<IEvent[]>([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -72,6 +73,8 @@ const EventSaya = () => {
         setEvents(res.data.result.data);
       } catch (error) {
         showError(error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -81,11 +84,11 @@ const EventSaya = () => {
   const getFilteredEvents = () => {
     switch (tab) {
       case 'aktif':
-        return events.filter((e: any) => e.eventStatus === 'PUBLISHED');
+        return events.filter((e) => e.eventStatus === 'PUBLISHED');
       case 'draft':
-        return events.filter((e: any) => e.eventStatus === 'DRAFT');
+        return events.filter((e) => e.eventStatus === 'DRAFT');
       case 'lalu':
-        return events.filter((e: any) => e.eventStatus === 'COMPLETED');
+        return events.filter((e) => e.eventStatus === 'COMPLETED');
       default:
         return [];
     }
@@ -120,13 +123,13 @@ const EventSaya = () => {
         ].map(({ key, label }) => (
           <button
             key={key}
-            onClick={() => setTab(key as 'aktif' | 'draft' | 'lalu')}
+            onClick={() => setTab(key as typeof tab)}
             className={`group flex items-center gap-3 px-6 py-4 rounded-xl cursor-pointer transition-all duration-300 text-base font-medium tracking-wide relative overflow-hidden flex-1
-            ${
-              tab === key
-                ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg transform scale-105'
-                : 'text-white hover:bg-white/10 hover:shadow-md'
-            }`}
+              ${
+                tab === key
+                  ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg transform scale-105'
+                  : 'text-white hover:bg-white/10 hover:shadow-md'
+              }`}
           >
             {tab === key && (
               <div className="absolute inset-0 bg-gradient-to-r from-pink-400/20 to-purple-400/20 rounded-xl" />
@@ -135,7 +138,11 @@ const EventSaya = () => {
               {getTabIcon(key)}
               <span>{label}</span>
               <div
-                className={`px-2 py-1 rounded-full text-xs font-bold ${tab === key ? 'bg-white/20 text-white' : 'bg-purple-500/30 text-purple-100'}`}
+                className={`px-2 py-1 rounded-full text-xs font-bold ${
+                  tab === key
+                    ? 'bg-white/20 text-white'
+                    : 'bg-purple-500/30 text-purple-100'
+                }`}
               >
                 {getFilteredEvents().length}
               </div>
@@ -147,86 +154,93 @@ const EventSaya = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-10">
-        {getFilteredEvents().map((event: any) => (
-          <div
-            key={event.id}
-            className="group relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl hover:scale-105 transition-all duration-500 overflow-hidden"
-          >
-            <div className="absolute top-4 right-4 z-20">
-              <div
-                className={`px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm border ${
-                  event.eventStatus === 'PUBLISHED'
-                    ? 'bg-green-500/20 text-green-300 border-green-400/30'
-                    : event.eventStatus === 'DRAFT'
-                      ? 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30'
-                      : 'bg-blue-500/20 text-blue-300 border-blue-400/30'
-                }`}
-              >
-                {event.eventStatus === 'PUBLISHED'
-                  ? 'Aktif'
-                  : event.eventStatus === 'DRAFT'
-                    ? 'Draft'
-                    : 'Selesai'}
-              </div>
-            </div>
-
-            <div className="relative overflow-hidden">
-              <img
-                src={event.banner ?? '/images/default.png'}
-                alt={event.name}
-                className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              {event.eventStatus === 'COMPLETED' && (
-                <div className="absolute bottom-4 left-4 flex items-center gap-1 bg-black/30 backdrop-blur-sm px-2 py-1 rounded-full">
-                  <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                  <span className="text-white text-sm font-medium">
-                    {getRating(event)}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className="p-6 space-y-4">
-              <h3 className="text-xl font-bold text-white">{event.name}</h3>
-              <div className="space-y-2 text-purple-200">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <p className="text-sm font-medium">
-                    {new Date(event.startDate).toLocaleDateString('id-ID', {
-                      dateStyle: 'long'
-                    })}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  <p className="text-sm font-medium">{event.location}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  <p className="text-sm font-medium">
-                    {event.transactions.length} peserta
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                <button
-                  onClick={() => router.push(`/event/${event.slug}`)}
-                  className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2 px-4 rounded-xl font-medium hover:from-pink-600 hover:to-purple-600 transition-all duration-300"
+      {loading ? (
+        <div className="text-center text-white mt-20">Loading events...</div>
+      ) : getFilteredEvents().length === 0 ? (
+        <div className="text-center text-white mt-20">
+          Belum ada event di tab ini.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-10">
+          {getFilteredEvents().map((event) => (
+            <div
+              key={event.id}
+              className="group relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl hover:scale-105 transition-all duration-500 overflow-hidden"
+            >
+              <div className="absolute top-4 right-4 z-20">
+                <div
+                  className={`px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm border ${
+                    event.eventStatus === 'PUBLISHED'
+                      ? 'bg-green-500/20 text-green-300 border-green-400/30'
+                      : event.eventStatus === 'DRAFT'
+                        ? 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30'
+                        : 'bg-blue-500/20 text-blue-300 border-blue-400/30'
+                  }`}
                 >
-                  {event.eventStatus === 'DRAFT' ? 'Edit' : 'Lihat Detail'}
-                </button>
-                {event.eventStatus === 'PUBLISHED' && (
-                  <button className="bg-white/20 text-white py-2 px-4 rounded-xl font-medium hover:bg-white/30 border border-white/30 transition-all duration-300">
-                    Kelola
-                  </button>
+                  {event.eventStatus === 'PUBLISHED'
+                    ? 'Aktif'
+                    : event.eventStatus === 'DRAFT'
+                      ? 'Draft'
+                      : 'Selesai'}
+                </div>
+              </div>
+
+              <div className="relative overflow-hidden">
+                <img
+                  src={
+                    event.banner ??
+                    'https://static.thenounproject.com/png/1077596-200.png'
+                  }
+                  alt={event.name}
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      'https://static.thenounproject.com/png/1077596-200.png';
+                  }}
+                  className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+                {event.eventStatus === 'COMPLETED' && (
+                  <div className="absolute bottom-4 left-4 flex items-center gap-1 bg-black/30 backdrop-blur-sm px-2 py-1 rounded-full">
+                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                    <span className="text-white text-sm font-medium">
+                      {getRating(event)}
+                    </span>
+                  </div>
                 )}
               </div>
+
+              <div className="p-6 space-y-4">
+                <h3 className="text-xl font-bold text-white">{event.name}</h3>
+                <p className="text-sm italic text-purple-300">
+                  {event.category}
+                </p>
+                <div className="space-y-2 text-purple-200">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    <p className="text-sm font-medium">
+                      {new Date(event.startDate).toLocaleDateString('id-ID', {
+                        dateStyle: 'long'
+                      })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    <p className="text-sm font-medium">{event.location}</p>
+                  </div>
+                </div>
+
+                <div className="flex pt-4">
+                  <button
+                    onClick={() => router.push(`/reporting/${event.slug}`)}
+                    className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2 px-4 rounded-xl font-medium hover:from-pink-600 hover:to-purple-600 transition-all duration-300"
+                  >
+                    Reporting
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       <div className="flex justify-center my-20">
         <button

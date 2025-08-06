@@ -4,7 +4,8 @@ const nextConfig = {
     domains: [
       'www.runsensible.com',
       'encrypted-tbn0.gstatic.com',
-      'placehold.co'
+      'placehold.co',
+      'picsum.photos'
     ]
   }
 };
