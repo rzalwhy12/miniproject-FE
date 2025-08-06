@@ -4,17 +4,19 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiCall } from '@/helper/apiCall';
 import { showError } from '@/helper/interceptor';
+import { toast } from 'sonner';
 import {
   Calendar,
   MapPin,
-  Users,
   Star,
   TrendingUp,
   Clock,
-  Plus
+  Plus,
+  Pencil,
+  Trash
 } from 'lucide-react';
 
-export type EventStatus = 'DRAFT' | 'PUBLISHED' | 'COMPLETED';
+export type EventStatus = 'DRAFT' | 'PUBLISHED' | 'PAST';
 
 export interface IEvent {
   id: number;
@@ -61,15 +63,25 @@ const EventSaya = () => {
   const [tab, setTab] = useState<'aktif' | 'draft' | 'lalu'>('aktif');
   const [events, setEvents] = useState<IEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const fetchMyEvents = async () => {
+      setLoading(true);
       try {
         const token = localStorage.getItem('token');
-        const res = await apiCall.get('/event/my-event', {
+        const statusMap = {
+          aktif: 'PUBLISHED',
+          draft: 'DRAFT',
+          lalu: 'PAST'
+        };
+
+        const res = await apiCall.get(`/event/my-event/${statusMap[tab]}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
+
         setEvents(res.data.result.data);
       } catch (error) {
         showError(error);
@@ -79,20 +91,7 @@ const EventSaya = () => {
     };
 
     fetchMyEvents();
-  }, []);
-
-  const getFilteredEvents = () => {
-    switch (tab) {
-      case 'aktif':
-        return events.filter((e) => e.eventStatus === 'PUBLISHED');
-      case 'draft':
-        return events.filter((e) => e.eventStatus === 'DRAFT');
-      case 'lalu':
-        return events.filter((e) => e.eventStatus === 'COMPLETED');
-      default:
-        return [];
-    }
-  };
+  }, [tab]);
 
   const getRating = (event: IEvent) => {
     if (!event.reviews.length) return '0.0';
@@ -113,8 +112,31 @@ const EventSaya = () => {
     }
   };
 
+  const openConfirmModal = (id: number) => {
+    setSelectedEventId(id);
+    setShowConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedEventId) return;
+    try {
+      const token = localStorage.getItem('token');
+      await apiCall.delete(`/event/${selectedEventId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Event berhasil dihapus.');
+      setEvents((prev) => prev.filter((e) => e.id !== selectedEventId));
+    } catch (error) {
+      showError(error);
+    } finally {
+      setShowConfirm(false);
+      setSelectedEventId(null);
+    }
+  };
+
   return (
     <div className="w-full px-4 lg:px-12">
+      {/* Tab Button */}
       <div className="flex justify-center md:justify-between max-w-5xl mx-auto backdrop-blur-xl bg-white/10 rounded-2xl shadow-2xl border border-white/20 p-2 mb-8">
         {[
           { key: 'aktif', label: 'Event Aktif' },
@@ -144,7 +166,7 @@ const EventSaya = () => {
                     : 'bg-purple-500/30 text-purple-100'
                 }`}
               >
-                {getFilteredEvents().length}
+                {events.length}
               </div>
             </div>
             {tab === key && (
@@ -154,35 +176,40 @@ const EventSaya = () => {
         ))}
       </div>
 
+      {/* Event List */}
       {loading ? (
         <div className="text-center text-white mt-20">Loading events...</div>
-      ) : getFilteredEvents().length === 0 ? (
+      ) : events.length === 0 ? (
         <div className="text-center text-white mt-20">
           Belum ada event di tab ini.
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-10">
-          {getFilteredEvents().map((event) => (
+          {events.map((event) => (
             <div
               key={event.id}
-              className="group relative backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl hover:scale-105 transition-all duration-500 overflow-hidden"
+              onClick={() => router.push(`/edit/${event.slug}`)}
+              className="group relative cursor-pointer backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl hover:scale-105 transition-all duration-500 overflow-hidden"
             >
-              <div className="absolute top-4 right-4 z-20">
-                <div
-                  className={`px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm border ${
-                    event.eventStatus === 'PUBLISHED'
-                      ? 'bg-green-500/20 text-green-300 border-green-400/30'
-                      : event.eventStatus === 'DRAFT'
-                        ? 'bg-yellow-500/20 text-yellow-300 border-yellow-400/30'
-                        : 'bg-blue-500/20 text-blue-300 border-blue-400/30'
-                  }`}
+              <div className="absolute top-4 right-4 z-20 flex gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/edit/${event.slug}`);
+                  }}
+                  className="p-2 rounded-full bg-yellow-400/20 border border-yellow-300/30 text-yellow-200 hover:bg-yellow-400/30"
                 >
-                  {event.eventStatus === 'PUBLISHED'
-                    ? 'Aktif'
-                    : event.eventStatus === 'DRAFT'
-                      ? 'Draft'
-                      : 'Selesai'}
-                </div>
+                  <Pencil size={16} />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openConfirmModal(event.id);
+                  }}
+                  className="p-2 rounded-full bg-red-400/20 border border-red-300/30 text-red-200 hover:bg-red-400/30"
+                >
+                  <Trash size={16} />
+                </button>
               </div>
 
               <div className="relative overflow-hidden">
@@ -198,7 +225,7 @@ const EventSaya = () => {
                   }}
                   className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110"
                 />
-                {event.eventStatus === 'COMPLETED' && (
+                {event.eventStatus === 'PAST' && (
                   <div className="absolute bottom-4 left-4 flex items-center gap-1 bg-black/30 backdrop-blur-sm px-2 py-1 rounded-full">
                     <Star className="w-4 h-4 text-yellow-400 fill-current" />
                     <span className="text-white text-sm font-medium">
@@ -230,7 +257,10 @@ const EventSaya = () => {
 
                 <div className="flex pt-4">
                   <button
-                    onClick={() => router.push(`/reporting/${event.slug}`)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/reporting/${event.slug}`);
+                    }}
                     className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2 px-4 rounded-xl font-medium hover:from-pink-600 hover:to-purple-600 transition-all duration-300"
                   >
                     Reporting
@@ -242,6 +272,7 @@ const EventSaya = () => {
         </div>
       )}
 
+      {/* Button Buat Event Baru */}
       <div className="flex justify-center my-20">
         <button
           onClick={() => router.push('/create')}
@@ -253,6 +284,38 @@ const EventSaya = () => {
           </div>
         </button>
       </div>
+
+      {/* Modal Konfirmasi Delete */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white/70 rounded-xl p-6 w-full max-w-md shadow-2xl">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">
+              Konfirmasi Hapus Event
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Apakah kamu yakin ingin menghapus event ini? Tindakan ini tidak
+              bisa dibatalkan.
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => {
+                  setShowConfirm(false);
+                  setSelectedEventId(null);
+                }}
+                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800"
+              >
+                Batal
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 rounded-md bg-red-500 hover:bg-red-600 text-white font-semibold"
+              >
+                Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
