@@ -4,7 +4,6 @@ import React, { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 
 import VoucherSection from '@/app/create/components/VoucherSection';
-import AuthLogin from '@/middleware/Auth';
 import AuthOrganizer from '@/middleware/AuthOrganizer';
 import BackgroundElements from './components/BackgroundElements';
 import EventImageUpload from './components/EventImageUpload';

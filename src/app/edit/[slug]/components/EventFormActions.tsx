@@ -1,36 +1,45 @@
 'use client';
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Zap } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hook';
 import {
-  createEventForm,
-  resetEventForm
-} from '@/lib/redux/features/createEvenSlice';
+  setEditEventForm,
+  resetEditEventForm
+} from '@/lib/redux/features/editEventSlice';
 import { apiCall } from '@/helper/apiCall';
 import { showError } from '@/helper/interceptor';
 import { toast } from 'sonner';
 
-interface EventFormActionsProps {
+interface EditEventFormActionsProps {
   image: File | null;
 }
 
-const EventFormActions: React.FC<EventFormActionsProps> = ({ image }) => {
+const EditEventFormActions: React.FC<EditEventFormActionsProps> = ({
+  image
+}) => {
   const dispatch = useAppDispatch();
-  const form = useAppSelector((state) => state.createEvent);
-  const user = useAppSelector((state) => state.account);
+  const form = useAppSelector((state) => state.editEvent);
 
-  const obBtSubmit = async (eventStatus: 'DRAFT' | 'PUBLISHED') => {
-    dispatch(createEventForm({ loading: true, message: '' }));
+  const onBtnSubmit = async (eventStatus: 'DRAFT' | 'PUBLISHED') => {
+    dispatch(setEditEventForm({ loading: true, message: '' }));
 
     try {
       const token = localStorage.getItem('token');
-      if (!image) {
-        toast.warning('banner required');
+      const headers = {
+        Authorization: `Bearer ${token}`
+      };
+
+      if (!image && !form.imageUrl) {
+        toast.warning('Banner wajib diisi');
         return;
       }
+
       const formData = new FormData();
-      formData.append('banner', image);
+      if (image) {
+        formData.append('banner', image);
+      }
 
       const payload = {
         name: form.name,
@@ -45,25 +54,28 @@ const EventFormActions: React.FC<EventFormActionsProps> = ({ image }) => {
         vouchers: form.vouchers
       };
 
-      const headers = {
-        Authorization: `Bearer ${token}`
-      };
-
-      const res = await apiCall.post('/event/create', payload, { headers });
-
-      const upload = await apiCall.patch(
-        `/event/banner/${res.data.result.data.id}`,
-        formData,
-        { headers }
+      const res = await apiCall.patch(
+        `/event/update/${form.eventId}`,
+        payload,
+        {
+          headers
+        }
       );
 
-      if (res.data.result.success) {
-        toast.success(res.data.result.message);
+      const eventId = res.data.result.data.id;
+
+      if (image) {
+        await apiCall.patch(`/event/banner/${eventId}`, formData, {
+          headers
+        });
       }
 
-      dispatch(resetEventForm());
+      toast.success('Event berhasil diperbarui!');
+      dispatch(resetEditEventForm());
     } catch (error) {
       showError(error);
+    } finally {
+      dispatch(setEditEventForm({ loading: false }));
     }
   };
 
@@ -72,20 +84,20 @@ const EventFormActions: React.FC<EventFormActionsProps> = ({ image }) => {
       <div className="flex flex-col lg:flex-row justify-between items-center gap-6 pt-8">
         <div className="flex items-center text-gray-600">
           <Sparkles className="w-5 h-5 mr-2 text-purple-500" />
-          <p className="text-sm">Ready to launch your extraordinary event?</p>
+          <p className="text-sm">Siap memperbarui event luar biasa kamu?</p>
         </div>
         <div className="flex gap-4">
           <Button
             type="button"
-            onClick={() => obBtSubmit('DRAFT')}
+            onClick={() => onBtnSubmit('DRAFT')}
             variant="outline"
             className="bg-white/80 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 px-6 py-3"
           >
-            Save Draft
+            Simpan Draft
           </Button>
           <Button
             type="button"
-            onClick={() => obBtSubmit('PUBLISHED')}
+            onClick={() => onBtnSubmit('PUBLISHED')}
             className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 shadow-lg px-8 py-3 relative overflow-hidden group"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -93,12 +105,12 @@ const EventFormActions: React.FC<EventFormActionsProps> = ({ image }) => {
               {form.loading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                  Creating Event...
+                  Updating...
                 </>
               ) : (
                 <>
                   <Zap className="w-4 h-4 mr-2" />
-                  Launch Event
+                  Update Event
                 </>
               )}
             </span>
@@ -106,7 +118,6 @@ const EventFormActions: React.FC<EventFormActionsProps> = ({ image }) => {
         </div>
       </div>
 
-      {/* Message Display */}
       {form.message && (
         <div
           className={`p-6 rounded-xl backdrop-blur-sm border shadow-lg mt-6 ${
@@ -125,14 +136,6 @@ const EventFormActions: React.FC<EventFormActionsProps> = ({ image }) => {
             )}
             <div className="flex-1">
               <span className="font-medium block">{form.message}</span>
-              {form.message.includes('server berjalan') && (
-                <span className="text-sm mt-1 block opacity-80"></span>
-              )}
-              {form.message.includes('login') && (
-                <span className="text-sm mt-1 block opacity-80">
-                  Silakan refresh halaman dan login kembali.
-                </span>
-              )}
             </div>
           </div>
         </div>
@@ -141,4 +144,4 @@ const EventFormActions: React.FC<EventFormActionsProps> = ({ image }) => {
   );
 };
 
-export default EventFormActions;
+export default EditEventFormActions;

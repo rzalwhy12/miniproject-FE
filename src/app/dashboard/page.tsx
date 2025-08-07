@@ -23,6 +23,7 @@ import Settings from './componets/Settings';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthLogin from '@/middleware/Auth';
+import AuthOrganizer from '@/middleware/AuthOrganizer';
 
 const DashboardPage = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -48,7 +49,7 @@ const DashboardPage = () => {
 
   return (
     <>
-      <AuthLogin />
+      <AuthOrganizer />
       <div className="relative flex h-screen overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-800 to-pink-700">
         {/* Sidebar */}
         <aside
@@ -66,7 +67,10 @@ const DashboardPage = () => {
                   <Sparkles className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent">
+                  <h1
+                    className="text-xl font-bold bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent cursor-pointer"
+                    onClick={() => router.push('/')}
+                  >
                     Loka Adicara
                   </h1>
                   <p className="text-xs text-purple-200">Event Management</p>
