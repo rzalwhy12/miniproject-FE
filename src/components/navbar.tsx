@@ -116,7 +116,7 @@ const Navbar = () => {
         >
           {/* Left Nav */}
           <a
-            href="#contact"
+            href="/contact"
             className="flex items-center gap-2 text-gray-600 hover:text-pink-500 text-sm sm:text-base"
           >
             <Phone className="w-5 h-5" />

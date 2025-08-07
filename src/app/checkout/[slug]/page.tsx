@@ -35,15 +35,19 @@ const CheckoutPage = () => {
     const searchParams = useSearchParams();
     const [voucherCode, setVoucherCode] = useState('');
     const [usePoint, setUsePoint] = useState(false);
+    const [useCoupon, setUseCoupon] = useState(false);
     const [orderSummary, setOrderSummary] = useState<OrderSummary | null>(null);
     const [userInfo, setUserInfo] = useState<{
         name: string;
         email: string;
         noTlp: string;
         totalPoint: number;
+        couponDiscount: number;
     } | null>(null);
     const [vouchers, setVouchers] = useState<any[]>([]);
     const [selectedVoucherId, setSelectedVoucherId] = useState<number | null>(null);
+    
+
 
     useEffect(() => {
         const fetchCheckoutData = async () => {
@@ -80,11 +84,13 @@ const CheckoutPage = () => {
                 });
 
                 const user = resUser.data.result.data;
+                console.log('User coupon discount:', user.couponDiscount);
                 setUserInfo({
                     name: user.name,
                     email: user.email,
                     noTlp: user.noTlp,
-                    totalPoint: user.totalPoint
+                    totalPoint: user.totalPoint,
+                    couponDiscount: user.couponDiscount || 0
                 });
 
                 setOrderSummary({
@@ -109,8 +115,10 @@ const CheckoutPage = () => {
                 
                 const checkoutData = JSON.parse(checkoutDataRaw);
                 const eventId = checkoutData.eventId;
+
                 
                 const res = await apiCall.get(`/voucher/event/${eventId}`);
+                console.log(res.data)
                 setVouchers(res.data.result.data || []);
             } catch (err) {
                 // If event-specific voucher endpoint doesn't exist, fall back to general vouchers
@@ -171,7 +179,7 @@ const CheckoutPage = () => {
         }
     };
 
-    // Recalculate discounts when voucher or point changes
+    // Recalculate discounts when voucher, coupon or point changes
     useEffect(() => {
         if (!orderSummary || !userInfo) return;
 
@@ -183,25 +191,32 @@ const CheckoutPage = () => {
                 voucherDiscount = Math.floor(orderSummary.subtotal * (selected.discount || 0) / 100);
             }
         }
-        // Remove the else if clause that was keeping old voucher discount
+
+        // Add coupon discount calculation
+        let couponDiscount = 0;
+        if (useCoupon && userInfo.couponDiscount > 0) {
+            couponDiscount = Math.floor(orderSummary.subtotal * (userInfo.couponDiscount || 0) / 100);
+        }
+
+        const totalDiscountFromVoucherAndCoupon = voucherDiscount + couponDiscount;
 
         const pointDiscount = usePoint
-            ? Math.min(userInfo.totalPoint, Math.max(0, orderSummary.subtotal - voucherDiscount))
+            ? Math.min(userInfo.totalPoint, Math.max(0, orderSummary.subtotal - totalDiscountFromVoucherAndCoupon))
             : 0;
 
-        const finalTotal = Math.max(0, orderSummary.subtotal - voucherDiscount - pointDiscount);
+        const finalTotal = Math.max(0, orderSummary.subtotal - totalDiscountFromVoucherAndCoupon - pointDiscount);
 
         setOrderSummary((prev) =>
             prev
                 ? {
                     ...prev,
-                    voucherDiscount,
+                    voucherDiscount: totalDiscountFromVoucherAndCoupon, // This now includes both voucher and coupon
                     pointsDiscount: pointDiscount,
                     total: finalTotal
                 }
                 : prev
         );
-    }, [usePoint, selectedVoucherId, vouchers]);
+    }, [usePoint, useCoupon, selectedVoucherId, vouchers, userInfo?.couponDiscount]);
 
     const handleSubmitOrder = async () => {
         try {
@@ -211,16 +226,15 @@ const CheckoutPage = () => {
 
             const payload: any = {
                 eventId: orderSummary.eventId,
-                useCoupon: !!voucherCode,
+                useCoupon: useCoupon,
                 usePoint: usePoint,
-                pointsUsed: usePoint ? orderSummary.pointsDiscount : 0,
+                voucherCode: voucherCode || null,
                 orderItems: orderSummary.items.map((item) => ({
                     ticketTypeId: item.ticketTypeId,
                     quantity: item.quantity
                 }))
             };
-            if (voucherCode) payload.couponCode = voucherCode;
-            if (selectedVoucherId) payload.voucherId = selectedVoucherId;
+            // Remove the redundant voucherId assignment since we're using voucherCode
 
             const res = await apiCall.post('/transaction/create', payload, {
                 headers: {
@@ -229,7 +243,7 @@ const CheckoutPage = () => {
             });
 
             toast.success('Checkout berhasil!');
-            router.push(`/transaction/${res.data.result.transactionCode}`);
+            router.push(`/transaction/${res.data.result.data.transactionCode}`);
         } catch (err) {
             showError(err);
         }
@@ -315,26 +329,43 @@ const CheckoutPage = () => {
                         </div>
 
                         <div className="mt-8 space-y-4">
-                            {/* Kupon (input manual) */}
-                            <div className="bg-gray-50 border border-gray-200 p-6 rounded-2xl">
-                                <label className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c1.063 0 2.079.421 2.828 1.172l1.656 1.656a4 4 0 010 5.656l-1.656 1.656A4.003 4.003 0 0112 14H7a4 4 0 01-4-4V7a4 4 0 014-4z" />
-                                    </svg>
-                                    Coupon Code
-                                </label>
-                                <div className="flex gap-3">
-                                    <input
-                                        type="text"
-                                        value={voucherCode}
-                                        onChange={(e) =>
-                                            setVoucherCode(e.target.value.toUpperCase())
-                                        }
-                                        placeholder="Enter coupon code"
-                                        className="flex-1 px-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300"
-                                    />
+                            {/* User Coupon (checkbox) */}
+                            {userInfo?.couponDiscount > 0 && (
+                                <div className="bg-gray-50 border border-gray-200 p-6 rounded-2xl">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <input
+                                            type="checkbox"
+                                            id="use-coupon"
+                                            checked={useCoupon}
+                                            onChange={(e) => setUseCoupon(e.target.checked)}
+                                            className="w-5 h-5 rounded accent-purple-600 focus:ring-purple-500 focus:ring-2"
+                                        />
+                                        <label htmlFor="use-coupon" className="flex-grow text-lg font-bold text-gray-800 flex items-center gap-2">
+                                            <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c1.063 0 2.079.421 2.828 1.172l1.656 1.656a4 4 0 010 5.656l-1.656 1.656A4.003 4.003 0 0112 14H7a4 4 0 01-4-4V7a4 4 0 014-4z" />
+                                            </svg>
+                                            Use My Coupon
+                                        </label>
+                                    </div>
+                                    <div className="ml-8 space-y-2">
+                                        <div className="bg-white p-4 rounded-xl border border-purple-200">
+                                            <p className="font-bold text-purple-600 text-lg">Personal Coupon</p>
+                                            <p className="text-gray-600 text-sm mt-1">Your personal discount coupon</p>
+                                            <p className="text-purple-700 font-semibold mt-2">
+                                                Discount: {userInfo.couponDiscount}%
+                                            </p>
+                                        </div>
+                                        {useCoupon && (
+                                            <div className="space-y-1">
+                                                <p className="text-green-600 font-semibold flex items-center gap-2">
+                                                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                                    Coupon Applied!
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/* Voucher (pilihan dari backend) */}
                             {vouchers.length > 0 && (
@@ -354,9 +385,17 @@ const CheckoutPage = () => {
                                                         ? 'border-purple-400 shadow-lg shadow-purple-400/25 bg-gradient-to-br from-purple-50 to-blue-50' 
                                                         : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
                                                 }`}
-                                                onClick={() => setSelectedVoucherId(
-                                                    selectedVoucherId === voucher.id ? null : voucher.id
-                                                )}
+                                                onClick={() => {
+                                                    if (selectedVoucherId === voucher.id) {
+                                                        // Deselect voucher
+                                                        setSelectedVoucherId(null);
+                                                        setVoucherCode('');
+                                                    } else {
+                                                        // Select voucher
+                                                        setSelectedVoucherId(voucher.id);
+                                                        setVoucherCode(voucher.code);
+                                                    }
+                                                }}
                                             >
                                                 <div className="relative z-10">
                                                     <div className="font-bold text-xl text-gray-800 mb-3">{voucher.name}</div>

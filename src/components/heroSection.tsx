@@ -7,7 +7,7 @@ import { apiCall } from '@/helper/apiCall';
 
 interface EventData {
   id: number;
-  title: string;
+  name: string;
   subtitle: string;
   description: string;
   note: string;
@@ -15,6 +15,31 @@ interface EventData {
   tags: string[];
   slug?: string;
 }
+
+// Function to sanitize HTML content
+const sanitizeHTML = (html: string): string => {
+  // Basic HTML sanitization - removes potentially dangerous elements
+  const allowedTags = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'div'];
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
+  
+  // Remove script tags and other dangerous elements
+  const scriptTags = tempDiv.querySelectorAll('script, style, iframe, object, embed, form, input, button');
+  scriptTags.forEach(tag => tag.remove());
+  
+  // Remove dangerous attributes
+  const allElements = tempDiv.querySelectorAll('*');
+  allElements.forEach(element => {
+    const attributes = Array.from(element.attributes);
+    attributes.forEach(attr => {
+      if (attr.name.startsWith('on') || attr.name === 'style' || attr.name === 'href' || attr.name === 'src') {
+        element.removeAttribute(attr.name);
+      }
+    });
+  });
+  
+  return tempDiv.innerHTML;
+};
 
 const HeroSection: React.FC = () => {
   const router = useRouter();
@@ -120,7 +145,7 @@ const HeroSection: React.FC = () => {
             <div className="order-1 xl:order-2 relative flex-1 flex items-center justify-center w-full max-w-[95vw] sm:max-w-md md:max-w-lg xl:max-w-[1300px]">
               <img
                 src={event.banner}
-                alt={event.title}
+                alt={event.name}
                 className="rounded-tr-2xl sm:rounded-tr-3xl md:rounded-tr-[40px] object-cover w-full h-[420px] xs:h-[280px] sm:h-[520px] md:h-[520px] xl:h-[695px] shadow-xl relative z-1"
                 style={{
                   aspectRatio: '3/4',
@@ -178,19 +203,22 @@ const HeroSection: React.FC = () => {
             </div>
             {/* Kiri: Konten Utama */}
             <div className="order-2 xl:order-1 flex-1 flex flex-col items-center xl:items-start justify-center ml-0 sm:ml-2 xl:ml-[25px] px-2 xs:px-3 sm:px-4 xl:px-0 w-full max-w-full text-center xl:text-left">
-              <h1 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 mb-2 xs:mb-3 sm:mb-4 md:mb-6 w-full break-words">
-                {event.title}
+              <h1 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 mb-3 xs:mb-4 sm:mb-5 md:mb-6 lg:mb-8 w-full break-words">
+                {event.name}
               </h1>
-              <h2 className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl font-semibold text-gray-700 mb-2 xs:mb-2.5 sm:mb-3 md:mb-5 w-full break-words">
-                {event.subtitle}
-              </h2>
-              <p className="text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl text-gray-500 mb-2 xs:mb-2.5 sm:mb-3 md:mb-5 w-full break-words">
-                {event.description}
-              </p>
-              <p className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl text-gray-400 mb-3 sm:mb-4 md:mb-6 lg:mb-10 w-full break-words">
-                {event.note}
-              </p>
-              <Button className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 xs:px-6 xs:py-3 sm:px-8 sm:py-4 md:px-10 md:py-5 lg:px-14 lg:py-6 xl:px-16 xl:py-7 rounded-2xl text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold shadow-lg mb-4 xs:mb-6 sm:mb-10 md:mb-14 lg:mb-30 xl:mb-[180px] min-w-[90px] xs:min-w-[110px] sm:min-w-[140px] md:min-w-[180px] lg:min-w-[220px] xl:min-w-[260px] transition-all duration-200 w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto xl:mx-0">
+              {event.subtitle && (
+                <h2 className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold text-gray-700 mb-3 xs:mb-4 sm:mb-5 md:mb-6 w-full break-words">
+                  {event.subtitle}
+                </h2>
+              )}
+              <div 
+                className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl text-gray-600 mb-6 xs:mb-8 sm:mb-10 md:mb-12 lg:mb-16 w-full break-words prose prose-base max-w-none [&>*]:text-gray-600 [&>p]:mb-3 [&>h1]:text-xl [&>h1]:font-bold [&>h2]:text-lg [&>h2]:font-semibold [&>h3]:text-base [&>h3]:font-medium [&>strong]:font-bold [&>em]:italic [&>ul]:list-disc [&>ul]:pl-4 [&>ol]:list-decimal [&>ol]:pl-4 [&>li]:mb-2 line-clamp-3"
+                dangerouslySetInnerHTML={{ __html: typeof window !== 'undefined' ? sanitizeHTML(event.description) : event.description }}
+              />
+              <Button 
+                onClick={() => router.push('/tickets')}
+                className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 xs:px-6 xs:py-3 sm:px-8 sm:py-4 md:px-10 md:py-5 lg:px-14 lg:py-6 xl:px-16 xl:py-7 rounded-2xl text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold shadow-lg mb-4 xs:mb-6 sm:mb-10 md:mb-14 lg:mb-30 xl:mb-[180px] min-w-[90px] xs:min-w-[110px] sm:min-w-[140px] md:min-w-[180px] lg:min-w-[220px] xl:min-w-[260px] transition-all duration-200 w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto xl:mx-0 cursor-pointer"
+              >
                 Get Ticket
               </Button>
             </div>
