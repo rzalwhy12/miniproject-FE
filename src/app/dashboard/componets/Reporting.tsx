@@ -44,11 +44,12 @@ const Reporting = () => {
     const fetchReportingAll = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await apiCall.get('/event/reporting-all', {
+        const res = await apiCall.get(`/reporting-event/all`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
         const data = res.data.result?.data || [];
+        console.log(res.data);
 
         if (!Array.isArray(data)) {
           console.error('Response data bukan array:', data);

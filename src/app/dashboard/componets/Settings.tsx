@@ -48,13 +48,9 @@ const Settings = () => {
       setSendingEmail(true);
       const token = localStorage.getItem('token');
 
-      const res = await apiCall.post(
-        '/account/verify-email',
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      const res = await apiCall.get('/account/verify-email', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       toast.success(
         res.data.result.message || 'Email verifikasi telah dikirim!'

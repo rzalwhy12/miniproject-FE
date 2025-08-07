@@ -121,10 +121,10 @@ const EventSaya = () => {
     if (!selectedEventId) return;
     try {
       const token = localStorage.getItem('token');
-      await apiCall.delete(`/event/${selectedEventId}`, {
+      const res = await apiCall.delete(`/event/delete/${selectedEventId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success('Event berhasil dihapus.');
+      toast.success(res.data.result.message);
       setEvents((prev) => prev.filter((e) => e.id !== selectedEventId));
     } catch (error) {
       showError(error);
@@ -136,7 +136,6 @@ const EventSaya = () => {
 
   return (
     <div className="w-full px-4 lg:px-12">
-      {/* Tab Button */}
       <div className="flex justify-center md:justify-between max-w-5xl mx-auto backdrop-blur-xl bg-white/10 rounded-2xl shadow-2xl border border-white/20 p-2 mb-8">
         {[
           { key: 'aktif', label: 'Event Aktif' },
@@ -146,12 +145,7 @@ const EventSaya = () => {
           <button
             key={key}
             onClick={() => setTab(key as typeof tab)}
-            className={`group flex items-center gap-3 px-6 py-4 rounded-xl cursor-pointer transition-all duration-300 text-base font-medium tracking-wide relative overflow-hidden flex-1
-              ${
-                tab === key
-                  ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg transform scale-105'
-                  : 'text-white hover:bg-white/10 hover:shadow-md'
-              }`}
+            className={`group flex items-center gap-3 px-6 py-4 rounded-xl cursor-pointer transition-all duration-300 text-base font-medium tracking-wide relative overflow-hidden flex-1 ${tab === key ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg transform scale-105' : 'text-white hover:bg-white/10 hover:shadow-md'}`}
           >
             {tab === key && (
               <div className="absolute inset-0 bg-gradient-to-r from-pink-400/20 to-purple-400/20 rounded-xl" />
@@ -160,11 +154,7 @@ const EventSaya = () => {
               {getTabIcon(key)}
               <span>{label}</span>
               <div
-                className={`px-2 py-1 rounded-full text-xs font-bold ${
-                  tab === key
-                    ? 'bg-white/20 text-white'
-                    : 'bg-purple-500/30 text-purple-100'
-                }`}
+                className={`px-2 py-1 rounded-full text-xs font-bold ${tab === key ? 'bg-white/20 text-white' : 'bg-purple-500/30 text-purple-100'}`}
               >
                 {events.length}
               </div>
@@ -176,7 +166,6 @@ const EventSaya = () => {
         ))}
       </div>
 
-      {/* Event List */}
       {loading ? (
         <div className="text-center text-white mt-20">Loading events...</div>
       ) : events.length === 0 ? (
@@ -191,27 +180,28 @@ const EventSaya = () => {
               onClick={() => router.push(`/edit/${event.slug}`)}
               className="group relative cursor-pointer backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl shadow-2xl hover:scale-105 transition-all duration-500 overflow-hidden"
             >
-              <div className="absolute top-4 right-4 z-20 flex gap-2">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push(`/edit/${event.slug}`);
-                  }}
-                  className="p-2 rounded-full bg-yellow-400/20 border border-yellow-300/30 text-yellow-200 hover:bg-yellow-400/30"
-                >
-                  <Pencil size={16} />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openConfirmModal(event.id);
-                  }}
-                  className="p-2 rounded-full bg-red-400/20 border border-red-300/30 text-red-200 hover:bg-red-400/30"
-                >
-                  <Trash size={16} />
-                </button>
-              </div>
-
+              {event.eventStatus === 'DRAFT' && (
+                <div className="absolute top-4 right-4 z-20 flex gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/edit/${event.slug}`);
+                    }}
+                    className="p-2 rounded-full bg-yellow-400/20 border border-yellow-300/30 text-yellow-200 hover:bg-yellow-400/30"
+                  >
+                    <Pencil size={16} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openConfirmModal(event.id);
+                    }}
+                    className="p-2 rounded-full bg-red-400/20 border border-red-300/30 text-red-200 hover:bg-red-400/30"
+                  >
+                    <Trash size={16} />
+                  </button>
+                </div>
+              )}
               <div className="relative overflow-hidden">
                 <img
                   src={
@@ -234,7 +224,6 @@ const EventSaya = () => {
                   </div>
                 )}
               </div>
-
               <div className="p-6 space-y-4">
                 <h3 className="text-xl font-bold text-white">{event.name}</h3>
                 <p className="text-sm italic text-purple-300">
@@ -254,7 +243,6 @@ const EventSaya = () => {
                     <p className="text-sm font-medium">{event.location}</p>
                   </div>
                 </div>
-
                 <div className="flex pt-4">
                   <button
                     onClick={(e) => {
@@ -272,7 +260,6 @@ const EventSaya = () => {
         </div>
       )}
 
-      {/* Button Buat Event Baru */}
       <div className="flex justify-center my-20">
         <button
           onClick={() => router.push('/create')}
@@ -285,7 +272,6 @@ const EventSaya = () => {
         </button>
       </div>
 
-      {/* Modal Konfirmasi Delete */}
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white/70 rounded-xl p-6 w-full max-w-md shadow-2xl">
