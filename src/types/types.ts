@@ -99,3 +99,21 @@ export const statusOptions: StatusOption[] = [
     { value: 'CANCELLED', label: 'Cancelled' }
 ];
 
+// Category and Artist interfaces for Explore section
+export interface Category {
+    id: string;
+    name: string;
+    image: string;
+    eventCount?: number;
+}
+
+export interface Artist {
+    id: string;
+    name: string;
+    profileImage?: string;
+    image?: string;
+    genre?: string;
+    followers?: number;
+    events?: EventDetail[];
+}
+

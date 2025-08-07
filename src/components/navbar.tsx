@@ -176,14 +176,6 @@ const Navbar = () => {
               {showDropdown && (
                 <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg z-50 text-sm">
                   <Link
-                    href="/profile"
-                    onClick={() => setShowDropdown(false)}
-                    className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50"
-                  >
-                    <User className="w-4 h-4" />
-                    Profile
-                  </Link>
-                  <Link
                     href="/dashboard"
                     onClick={() => setShowDropdown(false)}
                     className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-50"
