@@ -1,5 +1,7 @@
 "use client"
 import React, { useState } from "react";
+import Image from "next/image";
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Testimonial {
     id: number;
@@ -49,14 +51,19 @@ const testimonials: Testimonial[] = [
 
 const Testimoni: React.FC = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
+    const cardsPerView = 3;
+    const totalPages = Math.ceil(testimonials.length / cardsPerView);
 
     const nextSlide = () => {
-        setCurrentIndex((prev) => (prev + 1) % (testimonials.length - 2));
+        setCurrentIndex((prev) => (prev + 1) % totalPages);
     };
 
     const prevSlide = () => {
-        setCurrentIndex((prev) => (prev - 1 + (testimonials.length - 2)) % (testimonials.length - 2));
+        setCurrentIndex((prev) => (prev - 1 + totalPages) % totalPages);
     };
+
+    const startIndex = currentIndex * cardsPerView;
+    const visibleTestimonials = testimonials.slice(startIndex, startIndex + cardsPerView);
 
     return (
         <section className="py-16 px-4 bg-gray-50">
@@ -76,74 +83,79 @@ const Testimoni: React.FC = () => {
                     {/* Navigation Buttons */}
                     <button
                         onClick={prevSlide}
-                        className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-shadow duration-300"
-                        style={{ marginLeft: '-20px' }}
+                        className="absolute -left-6 sm:-left-12 top-1/2 transform -translate-y-1/2 z-10 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-shadow duration-300"
+                        disabled={testimonials.length <= cardsPerView}
                     >
-                        <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
+                        <ChevronLeft className="w-6 h-6 text-gray-600" />
                     </button>
-
                     <button
                         onClick={nextSlide}
-                        className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-shadow duration-300"
-                        style={{ marginRight: '-20px' }}
+                        className="absolute -right-6 sm:-right-12 top-1/2 transform -translate-y-1/2 z-10 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-shadow duration-300"
+                        disabled={testimonials.length <= cardsPerView}
                     >
-                        <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
+                        <ChevronRight className="w-6 h-6 text-gray-600" />
                     </button>
 
                     {/* Testimonials Container */}
-                    <div className="overflow-hidden">
-                        <div
-                            className="flex transition-transform duration-500 ease-in-out"
-                            style={{ transform: `translateX(-${currentIndex * (100 / 3)}%)` }}
-                        >
-                            {testimonials.map((testimonial) => (
-                                <div key={testimonial.id} className="w-1/3 flex-shrink-0 px-4">
-                                    <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 relative h-80">
-                                        {/* Profile Section */}
-                                        <div className="flex items-center mb-6">
-                                            <div className="relative">
-                                                <img
-                                                    src={testimonial.avatar}
-                                                    alt={testimonial.name}
-                                                    className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
-                                                />
-                                                {/* Colored background circle */}
-                                                <div className="absolute -top-2 -right-2 w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full -z-10"></div>
-                                            </div>
-                                            <div className="ml-4">
-                                                <h3 className="font-semibold text-gray-900 text-lg">
-                                                    {testimonial.name}
-                                                </h3>
-                                                <div className="text-pink-500 text-2xl font-bold">
-                                                    {testimonial.rating}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Review Text */}
-                                        <p className="text-gray-700 leading-relaxed mb-6">
-                                            {testimonial.review}
-                                        </p>
-
-                                        {/* Quote Icon */}
-                                        <div className="absolute bottom-6 right-6">
-                                            <svg
-                                                className="w-8 h-8 text-pink-300"
-                                                fill="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-10zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
-                                            </svg>
+                    <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                        {visibleTestimonials.map((testimonial) => (
+                            <div
+                                key={testimonial.id}
+                                className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 relative h-80 flex flex-col justify-between"
+                            >
+                                {/* Profile Section */}
+                                <div className="flex items-center mb-6">
+                                    <div className="relative">
+                                        <Image
+                                            src={testimonial.avatar}
+                                            alt={testimonial.name}
+                                            width={64}
+                                            height={64}
+                                            className="w-16 h-16 rounded-full object-cover border-4 border-white shadow-lg"
+                                        />
+                                        <div className="absolute -top-2 -right-2 w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full -z-10"></div>
+                                    </div>
+                                    <div className="ml-4">
+                                        <h3 className="font-semibold text-gray-900 text-lg">
+                                            {testimonial.name}
+                                        </h3>
+                                        <div className="text-pink-500 text-2xl font-bold">
+                                            {testimonial.rating}
                                         </div>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+
+                                {/* Review Text */}
+                                <p className="text-gray-700 leading-relaxed mb-6">
+                                    {testimonial.review}
+                                </p>
+
+                                {/* Quote Icon */}
+                                <div className="absolute bottom-6 right-6">
+                                    <svg
+                                        className="w-8 h-8 text-pink-300"
+                                        fill="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-10zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        ))}
                     </div>
+                </div>
+                
+                {/* Pagination Dots (Optional, untuk visualisasi) */}
+                <div className="flex justify-center mt-8 space-x-2">
+                    {[...Array(totalPages)].map((_, index) => (
+                        <button
+                            key={index}
+                            onClick={() => setCurrentIndex(index)}
+                            className={`w-3 h-3 rounded-full transition-colors duration-300 ${
+                                currentIndex === index ? 'bg-purple-500' : 'bg-gray-300 hover:bg-gray-400'
+                            }`}
+                        />
+                    ))}
                 </div>
 
                 {/* Call to Action */}
