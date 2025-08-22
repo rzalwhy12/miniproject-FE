@@ -7,11 +7,7 @@ import { EventDetail } from '@/types/types'; // Pastikan path benar
 // Import Client Component
 import EventDetailsClient from './componets/EventDetailsClient';
 
-interface EventDetailPageProps {
-  params: {
-    slug: string;
-  };
-}
+// Next.js 15: params is a Promise in page props. Await it before use.
 
 async function getEventData(slug: string): Promise<EventDetail | null> {
   try {
@@ -42,9 +38,9 @@ async function getEventData(slug: string): Promise<EventDetail | null> {
   }
 }
 
-const EventDetailPage = async (props: EventDetailPageProps) => {
-  const { params } = props;
-  const eventData = await getEventData(params.slug);
+const EventDetailPage = async ({ params }: { params: Promise<{ slug: string }> }) => {
+  const { slug } = await params;
+  const eventData = await getEventData(slug);
 
   if (!eventData) {
     // Anda bisa merender halaman 404 custom atau pesan error

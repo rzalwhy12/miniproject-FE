@@ -1,3 +1,10 @@
+export interface Organizer {
+    id: string;
+    name: string;
+    profileImage?: string;
+    genre?: string;
+    followers?: number;
+}
 // types.ts
 
 export interface Voucher {

@@ -9,7 +9,8 @@ import {
 } from '@/lib/redux/features/createEvenSlice';
 import { apiCall } from '@/helper/apiCall';
 import { showError } from '@/helper/interceptor';
-import { toast } from 'sonner';
+
+const toastDynamic = async () => (await import('sonner')).toast as any;
 
 interface EventFormActionsProps {
   image: File | null;
@@ -24,9 +25,9 @@ const EventFormActions: React.FC<EventFormActionsProps> = ({ image }) => {
     dispatch(createEventForm({ loading: true, message: '' }));
 
     try {
-      const token = localStorage.getItem('token');
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
       if (!image) {
-        toast.warning('banner required');
+        (await toastDynamic())?.warning?.('banner required');
         return;
       }
       const formData = new FormData();
@@ -58,7 +59,7 @@ const EventFormActions: React.FC<EventFormActionsProps> = ({ image }) => {
       );
 
       if (res.data.result.success) {
-        toast.success(res.data.result.message);
+        (await toastDynamic())?.success?.(res.data.result.message);
       }
 
       dispatch(resetEventForm());

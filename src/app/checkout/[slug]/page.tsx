@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { apiCall } from '@/helper/apiCall';
 import { toast } from 'sonner';
 import { showError } from '@/helper/interceptor';
@@ -32,7 +32,6 @@ const formatPrice = (amount: number) => {
 
 const CheckoutPage = () => {
     const router = useRouter();
-    const searchParams = useSearchParams();
     const [voucherCode, setVoucherCode] = useState('');
     const [usePoint, setUsePoint] = useState(false);
     const [useCoupon, setUseCoupon] = useState(false);

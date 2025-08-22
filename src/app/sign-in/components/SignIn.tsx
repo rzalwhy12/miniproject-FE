@@ -6,11 +6,11 @@ import { showError } from '@/helper/interceptor';
 import { apiCall } from '@/helper/apiCall';
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/lib/redux/hook';
-import { hideLoading, showLoading } from '@/lib/redux/features/loadingSlice';
 import { useRouter } from 'next/navigation';
 import { userLogin } from '@/lib/redux/features/accountSlice';
 import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
+import { useAsyncWithLoading } from '@/hooks/useAsyncWithLoading';
 
 const SignIn: React.FC = () => {
   const formRef = useRef<HTMLFormElement>(null);
@@ -20,6 +20,7 @@ const SignIn: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const { executeWithCustomLoading } = useAsyncWithLoading();
 
   const btSignIn = async () => {
     try {
@@ -30,23 +31,30 @@ const SignIn: React.FC = () => {
         return toast.warning('Input required', { duration: 3000 });
       }
 
-      dispatch(showLoading());
-      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
-      const payload = {
-        email: isEmail ? identifier : undefined,
-        username: !isEmail ? identifier : undefined,
-        password,
-        rememberMe
+      const loginProcess = async () => {
+        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier);
+        const payload = {
+          email: isEmail ? identifier : undefined,
+          username: !isEmail ? identifier : undefined,
+          password,
+          rememberMe
+        };
+
+        const res = await apiCall.post('/auth/login', payload);
+        toast.success(res.data.result.message, { duration: 3000 });
+        dispatch(userLogin(res.data.result.data));
+        localStorage.setItem('token', res.data.result.token);
+        router.push('/');
       };
 
-      const res = await apiCall.post('/auth/login', payload);
-      dispatch(hideLoading());
-      toast.success(res.data.result.message, { duration: 3000 });
-      dispatch(userLogin(res.data.result.data));
-      localStorage.setItem('token', res.data.result.token);
-      router.push('/');
+      await executeWithCustomLoading(loginProcess, {
+        startMessage: 'Signing in...',
+        successMessage: 'Login successful!',
+        showSuccess: true,
+        successDuration: 1000
+      });
+
     } catch (error: unknown) {
-      dispatch(hideLoading());
       showError(error);
     }
   };

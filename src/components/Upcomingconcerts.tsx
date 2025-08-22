@@ -1,24 +1,35 @@
 "use client"
 import React, { useEffect, useState } from "react";
-import { apiCall } from "@/helper/apiCall";
+import { useRouter } from "next/navigation";
+import { apiCall } from '@/helper/apiCall';
 
-const UpcomingConcerts = () => {
+const UpcomingConcerts: React.FC<{ onLoaded?: () => void }> = ({ onLoaded }) => {
     const [concerts, setConcerts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const router = useRouter();
+    console.log('UpcomingConcerts mounted');
 
     useEffect(() => {
-        const fetchConcerts = async () => {
-            try {
-                const response = await apiCall.get("/event");
-                setConcerts(response.data.result.data || []);
-            } catch (error) {
-                setConcerts([]);
-            } finally {
+        console.log('UpcomingConcerts useEffect dijalankan');
+        apiCall.get('/event')
+            .then(res => {
+                console.log('UpcomingConcerts API response:', res);
+                setConcerts(res.data?.result?.data || []);
                 setLoading(false);
-            }
-        };
-        fetchConcerts();
-    }, []);
+                onLoaded?.();
+                console.log('UpcomingConcerts loading selesai');
+            })
+            .catch((error) => {
+                console.log('UpcomingConcerts API error:', error);
+                setLoading(false);
+                onLoaded?.();
+                console.log('UpcomingConcerts loading error');
+            });
+    }, []); // Remove onLoaded dependency
+
+    const handleCardClick = (slug: string) => {
+        router.push(`/adicara/${slug}`);
+    };
 
     return (
         <section className="px-8 py-10 max-w-[1300px] mx-auto ">
@@ -37,7 +48,8 @@ const UpcomingConcerts = () => {
                     {concerts.slice(0, 4).map((concert, idx) => (
                         <div
                             key={idx}
-                            className="group bg-white rounded-2xl shadow border flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-pink-300"
+                            className="group bg-white rounded-2xl shadow border flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-pink-300 cursor-pointer"
+                            onClick={() => handleCardClick(concert.slug)}
                         >
                             <div className="relative">
                                 <img

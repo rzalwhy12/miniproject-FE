@@ -5,7 +5,10 @@ const nextConfig = {
       'www.runsensible.com',
       'encrypted-tbn0.gstatic.com',
       'placehold.co',
-      'picsum.photos'
+      'picsum.photos',
+      'res.cloudinary.com',
+      'loremflickr.com',
+      'images.remotePatterns'
     ]
   }
 };

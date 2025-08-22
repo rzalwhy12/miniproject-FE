@@ -4,7 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Upload, Zap } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hook';
 import { createEventForm } from '@/lib/redux/features/createEvenSlice';
-import { toast } from 'sonner';
+
+const toastWarn = (message: string) => {
+  if (typeof window === 'undefined') return;
+  import('sonner').then((m) => {
+    const t: any = (m as any).toast;
+    if (t?.warning) t.warning(message);
+    else if (typeof t === 'function') t(message);
+  });
+};
 
 
 interface EventImageUploadProps {
@@ -17,7 +25,7 @@ const EventImageUpload: React.FC<EventImageUploadProps> = ({ image, setImage }) 
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
-      toast.warning('file size');
+      toastWarn('file size');
       return;
     }
     setImage(file);
