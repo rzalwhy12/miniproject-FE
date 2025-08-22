@@ -131,7 +131,7 @@ const Navbar = () => {
             Tickets
           </a>
           <a
-            href="blog"
+            href="/blog"
             className="flex items-center gap-2 text-gray-600 hover:text-pink-500 text-sm sm:text-base"
           >
             <Newspaper className="w-5 h-5" />

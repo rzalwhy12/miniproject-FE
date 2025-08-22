@@ -3,7 +3,7 @@ import axios from 'axios';
 import AppError from './AppError';
 
 export const apiCall = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_URL_DATABASE
+  baseURL: process.env.NEXT_PUBLIC_URL_DATABASE || 'http://localhost:4004'
 });
 
 // Add request interceptor for token (SSR safe)
