@@ -196,18 +196,18 @@ const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) =>
 
   return (
     <div className="bg-gray-50 font-sans">
-      <div className="max-w-7xl mx-auto py-8 px-4">
+      <div className="max-w-7xl mx-auto py-8 px-3 sm:px-4">
         {/* Banner Section */}
         <div className="relative rounded-2xl overflow-hidden shadow-2xl mb-8">
-          <img src={eventData.banner} alt={eventData.name} className="w-full h-72 md:h-96 object-cover" />
+          <img src={eventData.banner} alt={eventData.name} className="w-full h-64 sm:h-72 md:h-96 object-cover object-center" loading="lazy" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent"></div>
           <div className="absolute bottom-0 left-0 p-6 md:p-10">
-            <h1 className="text-white text-4xl md:text-6xl font-bold tracking-tight">{eventData.name}</h1>
-            <p className="text-pink-400 text-xl mt-2 font-medium">{eventData.category}</p>
+            <h1 className="text-white text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight break-words">{eventData.name}</h1>
+            <p className="text-pink-400 text-lg sm:text-xl mt-2 font-medium">{eventData.category}</p>
           </div>
         </div>
 
-        <div className="bg-white p-6 md:p-8 rounded-2xl shadow-xl">
+        <div className="bg-white p-4 sm:p-6 md:p-8 rounded-2xl shadow-xl">
           {/* Ticket Selection Section */}
           <div className="space-y-4 my-8">
             {eventData.ticketTypes.map((ticket) => {
@@ -215,34 +215,34 @@ const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) =>
               const isSoldOut = ticket.quota <= 0;
               return (
                 <div key={ticket.id} className="flex flex-col sm:flex-row items-center bg-white border border-gray-200 rounded-2xl p-4 shadow-md transition-all hover:shadow-lg hover:border-pink-300">
-                  <div className={`text-center p-4 rounded-xl mr-0 sm:mr-6 mb-4 sm:mb-0 ${isSoldOut ? 'bg-gray-200 text-gray-500' : 'bg-blue-600 text-white'}`}>
+                  <div className={`text-center p-4 rounded-xl mr-0 sm:mr-6 mb-4 sm:mb-0 shrink-0 ${isSoldOut ? 'bg-gray-200 text-gray-500' : 'bg-blue-600 text-white'}`}>
                     <p className="text-4xl font-bold">{day}</p>
                     <p className="text-lg">{month}</p>
                     <p className="text-sm">{year}</p>
                   </div>
-                  <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-4 items-center text-center sm:text-left w-full">
+                  <div className="flex-grow grid grid-cols-2 sm:grid-cols-4 gap-4 items-center text-center sm:text-left w-full min-w-0">
                     <div>
-                      <p className="font-bold text-xl text-gray-800">{ticket.name}</p>
+                      <p className="font-bold text-lg sm:text-xl text-gray-800 break-words">{ticket.name}</p>
                       <p className={`text-md font-semibold ${isSoldOut ? 'text-red-600' : 'text-green-600'}`}>{isSoldOut ? 'Sold Out' : 'Available'}</p>
                     </div>
                     <div>
                       <p className="text-gray-500">Price</p>
-                      <p className="font-semibold text-lg">{formatPrice(ticket.price)}</p>
+                      <p className="font-semibold text-base sm:text-lg">{formatPrice(ticket.price)}</p>
                     </div>
                     <div>
                       <p className="text-gray-500">Time</p>
-                      <p className="font-semibold text-lg">{formatTime(eventData.startDate)}</p>
+                      <p className="font-semibold text-base sm:text-lg">{formatTime(eventData.startDate)}</p>
                     </div>
                     <div>
                       <p className="text-gray-500">Location</p>
-                      <p className="font-semibold text-lg">{eventData.location}</p>
+                      <p className="font-semibold text-base sm:text-lg break-words">{eventData.location}</p>
                     </div>
                   </div>
-                  <div className="ml-0 sm:ml-6 mt-4 sm:mt-0">
+                  <div className="ml-0 sm:ml-6 mt-4 sm:mt-0 w-full sm:w-auto">
                     <button
                       onClick={() => handleViewTicketClick(ticket)}
                       disabled={isSoldOut}
-                      className={`w-full sm:w-auto px-8 py-3 rounded-lg font-semibold text-white transition-transform transform hover:scale-105 ${isSoldOut ? 'bg-gray-400 cursor-not-allowed' : 'bg-pink-500 hover:bg-pink-600'}`}
+                      className={`w-full sm:w-auto px-6 sm:px-8 py-3 rounded-lg font-semibold text-white transition-transform transform hover:scale-105 ${isSoldOut ? 'bg-gray-400 cursor-not-allowed' : 'bg-pink-500 hover:bg-pink-600'}`}
                     >
                       View Ticket
                     </button>
@@ -281,13 +281,14 @@ const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) =>
           <div className="my-12">
             <div className="flex items-center gap-3 text-gray-800 mb-4">
               <MapPin className="w-6 h-6 text-pink-500" />
-              <p className="text-lg"><strong>Address:</strong> {eventData.location}</p>
+              <p className="text-base sm:text-lg break-words"><strong>Address:</strong> {eventData.location}</p>
             </div>
             <div className="rounded-2xl overflow-hidden border-2 border-gray-200">
               {/* Google Maps Embed with Search Bar */}
-              <div className="relative w-full h-72">
+              {/* Mobile: Search bar outside the map */}
+              <div className="md:hidden p-3">
                 <form
-                  className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex bg-white rounded-lg shadow-md p-2 gap-2"
+                  className="flex flex-col sm:flex-row items-stretch bg-white rounded-lg shadow-md p-2 gap-2"
                   onSubmit={e => {
                     e.preventDefault();
                     if (searchInput) {
@@ -300,18 +301,57 @@ const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) =>
                     type="text"
                     value={searchInput}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchInput(e.target.value)}
-                    className="px-3 py-1 rounded-l-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-400"
+                    className="px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-400 flex-1 min-w-0"
+                    placeholder="Search location..."
+                  />
+                  <div className="flex gap-2 sm:w-auto">
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 font-semibold w-full sm:w-auto"
+                    >
+                      Search
+                    </button>
+                    <button
+                      type="button"
+                      className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold w-full sm:w-auto"
+                      onClick={() => {
+                        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`);
+                      }}
+                    >
+                      Open in Google Maps
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <div className="relative w-full h-64 sm:h-72">
+                {/* Desktop/Tablet: overlay search bar */}
+                <form
+                  className="hidden md:flex absolute top-3 right-3 z-10 bg-white rounded-lg shadow-md p-1 gap-2 items-stretch w-[700px] lg:w-[860px]"
+                  onSubmit={e => {
+                    e.preventDefault();
+                    if (searchInput) {
+                      setMapQuery(searchInput);
+                    }
+                  }}
+                >
+                  <input
+                    name="search"
+                    type="text"
+                    value={searchInput}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchInput(e.target.value)}
+                    className="px-3 h-11 rounded-l-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-400 flex-1"
                     placeholder="Search location..."
                   />
                   <button
                     type="submit"
-                    className="px-4 py-1 bg-pink-500 text-white rounded-r-lg hover:bg-pink-600 font-semibold"
+                    className="px-4 h-11 bg-pink-500 text-white rounded-r-lg hover:bg-pink-600 font-semibold"
                   >
                     Search
                   </button>
                   <button
                     type="button"
-                    className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold ml-2"
+                    className="px-4 h-11 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold ml-2"
                     onClick={() => {
                       window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`);
                     }}
@@ -319,11 +359,12 @@ const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) =>
                     Open in Google Maps
                   </button>
                 </form>
+
                 <iframe
                   title="Event Location Map"
                   width="100%"
                   height="100%"
-                  className="w-full h-72 rounded-2xl border-0"
+                  className="w-full h-64 sm:h-72 rounded-2xl border-0"
                   style={{ filter: 'grayscale(0.2)' }}
                   loading="lazy"
                   allowFullScreen
@@ -376,16 +417,16 @@ const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) =>
                 <p className="text-gray-500">No reviews for this event yet.</p>
               )}
               {reviews.map((review: any) => (
-                <div key={review.id} className="flex gap-5">
-                  <img src={review.user.avatar || '/images/dami1.png'} alt={review.user.name} className="w-16 h-16 rounded-full object-cover shadow-md" />
-                  <div className="flex-1">
+                <div key={review.id} className="flex items-start gap-3 sm:gap-5">
+                  <img src={review.user.avatar || '/images/dami1.png'} alt={review.user.name} className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover shadow-md" loading="lazy" />
+                  <div className="flex-1 min-w-0">
                     <p className="font-bold text-lg">{review.user.name}</p>
                     <div className="flex items-center my-1">
                       {[...Array(5)].map((_, i) => (
                         <Star key={i} className={`w-5 h-5 ${i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} />
                       ))}
                     </div>
-                    <p className="text-gray-600 leading-relaxed">{review.comment}</p>
+                    <p className="text-gray-600 leading-relaxed break-words">{review.comment}</p>
                   </div>
                 </div>
               ))}
@@ -400,15 +441,17 @@ const EventDetailsClient: React.FC<EventDetailsClientProps> = ({ eventData }) =>
             {!loading.suggestions && !error.suggestions && suggestions.length === 0 && (
               <p className="text-gray-500">No other events to suggest.</p>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
               {suggestions.map(suggestion => (
                 <Link href={`/adicara/${suggestion.slug}`} key={suggestion.id}>
                   <div className="rounded-2xl overflow-hidden shadow-lg border border-gray-200 hover:shadow-2xl transition-shadow cursor-pointer group h-full flex flex-col">
-                    <img src={suggestion.banner} alt={suggestion.name} className="w-full h-56 object-cover transform group-hover:scale-105 transition-transform" />
-                    <div className="p-5 text-center bg-white flex-grow">
-                      <p className="font-bold text-lg">{suggestion.name}</p>
-                      <p className="text-md text-gray-600">{suggestion.location}</p>
-                      <p className="text-sm text-gray-500 mt-1">{formatSuggestionDate(suggestion.startDate)}</p>
+                    <div className="w-full overflow-hidden">
+                      <img src={suggestion.banner} alt={suggestion.name} className="w-full aspect-[16/9] object-cover transform group-hover:scale-105 transition-transform" loading="lazy" />
+                    </div>
+                    <div className="p-4 sm:p-5 text-center bg-white flex-grow">
+                      <p className="font-bold text-base sm:text-lg break-words">{suggestion.name}</p>
+                      <p className="text-sm sm:text-md text-gray-600 break-words">{suggestion.location}</p>
+                      <p className="text-xs sm:text-sm text-gray-500 mt-1">{formatSuggestionDate(suggestion.startDate)}</p>
                     </div>
                   </div>
                 </Link>

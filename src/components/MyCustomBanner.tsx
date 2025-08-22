@@ -1,6 +1,6 @@
 "use client"
 import React, { useEffect, useState } from "react";
-import { apiCall } from "@/helper/apiCall";
+import { apiCall } from '@/helper/apiCall';
 
 type Event = {
   id: number;
@@ -12,33 +12,37 @@ type Event = {
   city: string;
 };
 
-const MyCustomBanner: React.FC = () => {
+const MyCustomBanner: React.FC<{ onLoaded?: () => void }> = ({ onLoaded }) => {
   const [topEvents, setTopEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  console.log('CustomBanner mounted');
 
   useEffect(() => {
-    const fetchTopEvents = async () => {
-      try {
-        const response = await apiCall.get("/event");
-        const events = response.data.result.data || [];
-        // Sort by transaction count and get top 3
+    console.log('CustomBanner useEffect dijalankan');
+    apiCall.get('/event')
+      .then(res => {
+        console.log('CustomBanner API response:', res);
+        const events = res.data?.result?.data || [];
         const sortedEvents = events.sort((a: any, b: any) => (b.transactionCount || 0) - (a.transactionCount || 0));
         setTopEvents(sortedEvents.slice(0, 3));
-      } catch (error) {
-        setTopEvents([]);
-      } finally {
         setLoading(false);
-      }
-    };
-    fetchTopEvents();
-  }, []);
+        onLoaded?.();
+        console.log('CustomBanner loading selesai');
+      })
+      .catch((error) => {
+        console.log('CustomBanner API error:', error);
+        setLoading(false);
+        onLoaded?.();
+        console.log('CustomBanner loading error');
+      });
+  }, []); // Remove onLoaded dependency
 
   return (
     <div className="flex flex-col gap-8 w-full">
       {/* Banner Atas */}
       <div className="w-full flex justify-center">
         <img
-          src="/images/banner/1.png"
+          src="/images/banner/banner5.png"
           alt="Banner Promo"
           className="rounded-2xl w-full max-w-7xl h-auto min-h-[100px] md:h-[200px] object-cover"
         />
@@ -73,7 +77,7 @@ const MyCustomBanner: React.FC = () => {
       {/* Banner Bawah */}
       <div className="w-full flex justify-center">
         <img
-          src="/images/banner/5.png"
+          src="/images/banner/banner5.png"
           alt="Banner Promo Bawah"
           className="rounded-2xl w-full max-w-7xl h-auto min-h-[100px] md:h-[200px] object-cover pb-7"
         />

@@ -3,10 +3,10 @@ import './globals.css';
 import StoreProvider from './StoreProvider';
 import { Toaster } from 'sonner';
 import { ShowFooter } from '@/components/Footer';
-
-import LoadingAnimation from '@/components/Loading';
 import { ShowNavbar } from '@/components/navbar';
 import KeepLoginProvider from '@/middleware/KeepLogin';
+import { GlobalLoadingProvider } from '@/context/GlobalLoadingContext';
+import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay';
 
 
 const geistSans = Geist({
@@ -27,16 +27,18 @@ export default function RootLayout({
   return (
     <html lang="en">
       <StoreProvider>
+        <GlobalLoadingProvider>
           <KeepLoginProvider />
           <body
             className={`${geistSans.variable} ${geistMono.variable} antialiased`}
           >
             <ShowNavbar />
-            <LoadingAnimation />
+            <GlobalLoadingOverlay />
             {children}
             <Toaster richColors position="top-right" />
             <ShowFooter />
           </body>
+        </GlobalLoadingProvider>
       </StoreProvider>
     </html>
   );

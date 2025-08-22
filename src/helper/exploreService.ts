@@ -1,6 +1,18 @@
-// API services for categories and artists
-import { apiCall } from '@/helper/apiCall';
+import { Organizer } from '@/types/types';
+import { apiCall } from './apiCall';
 import { Category, Artist } from '@/types/types';
+
+export const organizerService = {
+    async getOrganizers(): Promise<Organizer[]> {
+        try {
+            const response = await apiCall.get('/organizer');
+            return response.data.result.data || [];
+        } catch (error) {
+            return [];
+        }
+    },
+};
+
 
 export const categoryService = {
     // Get all categories

@@ -3,7 +3,6 @@ import { useAppSelector } from '@/lib/redux/hook';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthLogin from './Auth';
-import { toast } from 'sonner';
 
 const AuthOrganizer = () => {
   const router = useRouter();

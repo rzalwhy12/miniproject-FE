@@ -1,18 +1,25 @@
 'use client';
 
-import { useAppSelector } from '@/lib/redux/hook';
-
 const LoadingAnimation = () => {
-  const isLoading = useAppSelector((state) => state.loading);
-
   return (
-    <>
-      {isLoading && (
-        <div className="fixed inset-0 z-[9999] overflow-hidden bg-black/70 backdrop-blur-xs flex items-center justify-center">
-          <div className="w-16 h-16 border-4 border-t-transparent border-white rounded-full animate-spin" />
+    <div className="fixed inset-0 z-[9999] overflow-hidden bg-white flex flex-col items-center justify-center">
+      <div className="relative">
+        {/* Logo atau nama aplikasi */}
+        <div className="text-2xl font-bold text-purple-600 mb-4">LokaAdicara</div>
+        
+        {/* Loading animation */}
+        <div className="flex items-center justify-center space-x-2">
+          <div className="w-4 h-4 bg-purple-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+          <div className="w-4 h-4 bg-purple-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+          <div className="w-4 h-4 bg-purple-600 rounded-full animate-bounce"></div>
         </div>
-      )}
-    </>
+        
+        {/* Loading text */}
+        <div className="mt-4 text-sm text-gray-500">
+          Loading amazing events for you...
+        </div>
+      </div>
+    </div>
   );
 };
 

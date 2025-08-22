@@ -55,7 +55,7 @@ const TransactionPage = () => {
                 setTransaction(response.data.result.data);
                 // Set timer if transaction is pending payment
                 const tx = response.data.result.data;
-                if (tx && tx.status === 'PENDING_PAYMENT') {
+                if (tx && tx.status === 'WAITING_PAYMENT') {
                     // Assume createdAt is ISO string
                     const created = new Date(tx.createdAt).getTime();
                     const now = Date.now();
@@ -78,7 +78,7 @@ const TransactionPage = () => {
 
     // Timer effect
     useEffect(() => {
-        if (!transaction || transaction.status !== 'PENDING_PAYMENT') return;
+        if (!transaction || transaction.status !== 'WAITING_PAYMENT') return;
         if (timeLeft <= 0) return;
         const timer = setInterval(() => {
             setTimeLeft((prev) => {
@@ -309,7 +309,7 @@ const TransactionPage = () => {
                 </div>
 
                 {/* Payment Instructions & Upload Section */}
-                {transaction.status === 'PENDING_PAYMENT' && (
+                {transaction.status === 'WAITING_PAYMENT' && (
                     <div className="bg-white shadow-xl border border-gray-200 p-8 rounded-3xl">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center">

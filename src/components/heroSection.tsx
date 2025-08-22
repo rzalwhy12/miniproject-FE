@@ -41,38 +41,37 @@ const sanitizeHTML = (html: string): string => {
   return tempDiv.innerHTML;
 };
 
-const HeroSection: React.FC = () => {
+const HeroSection: React.FC<{ onLoaded?: () => void }> = ({ onLoaded }) => {
+  console.log('HeroSection function dijalankan');
   const router = useRouter();
   const [searchResults, setSearchResults] = useState<{ artists: any[]; events: any[]; venues: any[] }>({ artists: [], events: [], venues: [] });
   const [showModal, setShowModal] = useState(false);
-  const [events, setEvents] = useState<EventData[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Gunakan ref untuk melacak elemen modal agar bisa menyembunyikannya saat user klik di luar
+  const [events, setEvents] = useState<EventData[]>([]);
+
   const searchContainerDesktopRef = useRef<HTMLDivElement>(null);
   const searchContainerMobileRef = useRef<HTMLDivElement>(null);
 
-  // useEffect untuk mengambil 5 event terbaru saat komponen pertama kali dimuat
   useEffect(() => {
-    const fetchEvents = async () => {
-      setIsLoading(true);
-      try {
-        const res = await apiCall.get('/event');
-        let data = res.data.result.data || [];
-        // Urutkan berdasarkan ID secara descending untuk mendapatkan event terbaru
-        data = data.sort((a: EventData, b: EventData) => (b.id ?? 0) - (a.id ?? 0));
-        // Ambil 5 event terbaru saja
+    console.log('HeroSection useEffect dijalankan');
+    apiCall.get('/event')
+      .then(res => {
+        console.log('HeroSection API response:', res);
+        const data = res.data?.result?.data || [];
         setEvents(data.slice(0, 5));
-      } catch (err) {
-        setEvents([]);
-      } finally {
         setIsLoading(false);
-      }
-    };
-    fetchEvents();
-  }, []);
+        onLoaded?.();
+        console.log('HeroSection loading selesai');
+      })
+      .catch((error) => {
+        console.log('HeroSection API error:', error);
+        setIsLoading(false);
+        onLoaded?.();
+        console.log('HeroSection loading error');
+      });
+  }, []); // Remove onLoaded dependency to prevent infinite loop
 
   // useEffect untuk menangani saran pencarian dengan debouncing
   useEffect(() => {
